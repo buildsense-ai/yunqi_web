@@ -1,12 +1,24 @@
+"use client"
+
+import { useState } from "react"
 import { format } from "date-fns"
 import type { Event } from "@/types/event"
 import Image from "next/image"
+import { Trash2, Edit2 } from "lucide-react"
+import ConfirmationDialog from "./confirmation-dialog"
+import EditEventForm from "./edit-event-form"
 
 interface EventCardProps {
   event: Event
+  onDelete: (eventId: number) => Promise<void>
+  onUpdate: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
 }
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showConfirmation, setShowConfirmation] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+
   // 格式化日期
   const formattedDate = format(new Date(event.create_time), "MM月dd日 HH:mm")
 
@@ -14,11 +26,13 @@ export default function EventCard({ event }: EventCardProps) {
   const getStatusInfo = (status: string) => {
     switch (status) {
       case "0":
-        return { text: "未处理", color: "bg-yellow-500" }
+        return { text: "待处理", color: "bg-yellow-500" }
       case "1":
-        return { text: "处理中", color: "bg-blue-500" }
+        return { text: "整改中", color: "bg-blue-500" }
       case "2":
-        return { text: "已完成", color: "bg-green-500" }
+        return { text: "待复核", color: "bg-purple-500" }
+      case "3":
+        return { text: "已闭环", color: "bg-green-500" }
       default:
         return { text: "未知", color: "bg-gray-500" }
     }
@@ -26,46 +40,105 @@ export default function EventCard({ event }: EventCardProps) {
 
   const statusInfo = getStatusInfo(event.status)
 
+  const handleDeleteClick = () => {
+    setShowConfirmation(true)
+  }
+
+  const handleEditClick = () => {
+    setShowEditForm(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    setShowConfirmation(false)
+    setIsDeleting(true)
+    try {
+      await onDelete(event.id)
+    } catch (error) {
+      console.error("Error deleting event:", error)
+      setIsDeleting(false)
+    }
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
-      {/* 卡片头部 */}
-      <div className="p-4 border-b border-gray-100">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="font-semibold text-lg">{event.summary}</h3>
-            <p className="text-sm text-gray-500 mt-1">{event.category}</p>
+    <>
+      <div className={`bg-white rounded-xl shadow-sm overflow-hidden mb-4 ${isDeleting ? "opacity-50" : ""}`}>
+        {/* 卡片头部 */}
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="font-semibold text-lg">{event.summary}</h3>
+              <p className="text-sm text-gray-500 mt-1">{event.category}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className={`${statusInfo.color} text-white text-xs px-2 py-1 rounded-full`}>{statusInfo.text}</div>
+              <button
+                onClick={handleEditClick}
+                className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100"
+                aria-label="编辑卡片"
+              >
+                <Edit2 size={16} />
+              </button>
+              <button
+                onClick={handleDeleteClick}
+                disabled={isDeleting}
+                className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100"
+                aria-label="删除卡片"
+              >
+                {isDeleting ? (
+                  <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <Trash2 size={16} />
+                )}
+              </button>
+            </div>
           </div>
-          <div className={`${statusInfo.color} text-white text-xs px-2 py-1 rounded-full`}>{statusInfo.text}</div>
+        </div>
+
+        {/* 卡片内容 */}
+        <div className="p-4">
+          {/* 消息内容 */}
+          {event.messages.map((message) => (
+            <div key={message.message_id} className="mb-3">
+              <p className="text-sm text-gray-700">{message.content}</p>
+              <p className="text-xs text-gray-500 mt-1">{format(new Date(message.timestamp), "HH:mm")}</p>
+            </div>
+          ))}
+
+          {/* 图片内容 */}
+          {event.candidate_images && event.candidate_images.length > 0 && (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {event.candidate_images.map((image) => (
+                <div key={image.image_key} className="relative h-32 rounded-md overflow-hidden">
+                  <Image
+                    src={image.image_data || "/placeholder.svg?height=128&width=128&query=event image"}
+                    alt="Event image"
+                    fill
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 卡片底部 */}
+        <div className="bg-gray-50 px-4 py-3 text-xs text-gray-500 flex justify-between">
+          <span>ID: {event.id}</span>
+          <span>{formattedDate}</span>
         </div>
       </div>
 
-      {/* 卡片内容 */}
-      <div className="p-4">
-        {/* 消息内容 */}
-        {event.messages.map((message) => (
-          <div key={message.message_id} className="mb-3">
-            <p className="text-sm text-gray-700">{message.content}</p>
-            <p className="text-xs text-gray-500 mt-1">{format(new Date(message.timestamp), "HH:mm")}</p>
-          </div>
-        ))}
+      <ConfirmationDialog
+        isOpen={showConfirmation}
+        title="删除卡片"
+        message={`确定要删除"${event.summary}"吗？此操作无法撤销。`}
+        confirmText="删除"
+        cancelText="取消"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setShowConfirmation(false)}
+      />
 
-        {/* 图片内容 */}
-        {event.candidate_images.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {event.candidate_images.map((image) => (
-              <div key={image.image_key} className="relative h-32 rounded-md overflow-hidden">
-                <Image src={image.image_data || "/placeholder.svg"} alt="Event image" fill className="object-cover" />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 卡片底部 */}
-      <div className="bg-gray-50 px-4 py-3 text-xs text-gray-500 flex justify-between">
-        <span>ID: {event.id}</span>
-        <span>{formattedDate}</span>
-      </div>
-    </div>
+      <EditEventForm event={event} isOpen={showEditForm} onClose={() => setShowEditForm(false)} onSave={onUpdate} />
+    </>
   )
 }

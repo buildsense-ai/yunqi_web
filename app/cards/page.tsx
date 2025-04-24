@@ -12,6 +12,7 @@ export default function CardsPage() {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
   const fetchEvents = async () => {
     try {
@@ -30,6 +31,54 @@ export default function CardsPage() {
   useEffect(() => {
     fetchEvents()
   }, [])
+
+  // 显示Toast消息
+  const showToast = (message: string, type: "success" | "error") => {
+    setToast({ message, type })
+    setTimeout(() => {
+      setToast(null)
+    }, 3000)
+  }
+
+  // 删除卡片
+  const handleDeleteEvent = async (eventId: number) => {
+    try {
+      await axios.delete(`/api/events/${eventId}`)
+      // 从列表中移除已删除的卡片
+      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId))
+      showToast("卡片已成功删除", "success")
+    } catch (error) {
+      console.error("Error deleting event:", error)
+      showToast("删除卡片失败，请重试", "error")
+      throw error
+    }
+  }
+
+  // 更新卡片
+  const handleUpdateEvent = async (eventId: number, data: { summary?: string; category?: string; status?: string }) => {
+    try {
+      const response = await axios.put(`/api/events/${eventId}`, data)
+
+      // 更新列表中的卡片
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId) {
+            return {
+              ...event,
+              ...data,
+            }
+          }
+          return event
+        }),
+      )
+
+      showToast("卡片已成功更新", "success")
+    } catch (error) {
+      console.error("Error updating event:", error)
+      showToast("更新卡片失败，请重试", "error")
+      throw error
+    }
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#F2F2F7]">
@@ -75,18 +124,35 @@ export default function CardsPage() {
                 key={event.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -100 }}
                 transition={{
                   duration: 0.3,
                   delay: index * 0.05,
                   ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
                 }}
               >
-                <EventCard event={event} />
+                <EventCard event={event} onDelete={handleDeleteEvent} onUpdate={handleUpdateEvent} />
               </motion.div>
             ))}
           </AnimatePresence>
         )}
       </div>
+
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
+              toast.type === "success" ? "bg-green-500" : "bg-red-500"
+            } text-white`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
