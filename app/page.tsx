@@ -4,8 +4,8 @@ import { useEffect, useState, useRef } from "react"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import ChatMessage from "@/components/chat-message"
-import ChatInput from "@/components/chat-input"
 import type { Message } from "@/types/message"
+import ClusteringButton from "@/components/clustering-button"
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -41,25 +41,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSendMessage = (text: string) => {
-    // In a real app, you would send this to your API
-    console.log("Sending message:", text)
-    // For demo purposes, we'll just add it to the local state
-    const newMessage: Message = {
-      message_id: `temp-${Date.now()}`,
-      msg_type: "text",
-      create_time: Date.now(),
-      sender_id: "current-user", // Assuming this is the current user
-      message_content: {
-        text,
-      },
-      image_url: null,
-      status: "1",
-    }
-
-    setMessages([...messages, newMessage])
-  }
-
   return (
     <div className="flex flex-col h-screen bg-[#F2F2F7]">
       {/* iOS-style header */}
@@ -71,7 +52,8 @@ export default function ChatPage() {
           <h1 className="font-semibold text-lg">Group Chat</h1>
           <p className="text-xs text-gray-500">5 participants</p>
         </div>
-        <div>
+        <div className="flex items-center space-x-3">
+          <ClusteringButton />
           <button className="text-[#007AFF] text-sm font-medium">Info</button>
         </div>
       </div>
@@ -109,9 +91,6 @@ export default function ChatPage() {
         )}
         <div ref={messagesEndRef} />
       </div>
-
-      {/* Input area */}
-      <ChatInput onSendMessage={handleSendMessage} />
     </div>
   )
 }
