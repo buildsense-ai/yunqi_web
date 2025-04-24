@@ -111,6 +111,34 @@ export default function CardsPage() {
     }
   }
 
+  // 添加图片
+  const handleAddImage = async (eventId: number, imageData: any) => {
+    try {
+      const response = await axios.post(`/api/events/${eventId}/images`, imageData)
+
+      // 更新列表中的卡片，添加新图片
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId) {
+            return {
+              ...event,
+              candidate_images: event.candidate_images
+                ? [...event.candidate_images, response.data.image]
+                : [response.data.image],
+            }
+          }
+          return event
+        }),
+      )
+
+      showToast("图片已成功关联", "success")
+    } catch (error) {
+      console.error("Error adding image:", error)
+      showToast("关联图片失败，请重试", "error")
+      throw error
+    }
+  }
+
   // 切换选择模式
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode)
@@ -253,6 +281,7 @@ export default function CardsPage() {
                   onDelete={handleDeleteEvent}
                   onUpdate={handleUpdateEvent}
                   onDeleteImage={handleDeleteImage}
+                  onAddImage={handleAddImage}
                   selectionMode={selectionMode}
                   isSelected={selectedEventIds.includes(event.id)}
                   onToggleSelect={toggleEventSelection}

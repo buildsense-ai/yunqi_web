@@ -3,16 +3,18 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import type { Event } from "@/types/event"
-import { Trash2, Edit2, Check, ImageIcon } from "lucide-react"
+import { Trash2, Edit2, Check, ImageIcon, Plus } from "lucide-react"
 import ConfirmationDialog from "./confirmation-dialog"
 import EditEventForm from "./edit-event-form"
 import SingleEventImage from "./event-image"
+import ImageSelectionDialog from "./image-selection-dialog"
 
 interface EventCardProps {
   event: Event
   onDelete: (eventId: number) => Promise<void>
   onUpdate: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
   onDeleteImage: (eventId: number, messageId: string) => Promise<void>
+  onAddImage: (eventId: number, imageData: any) => Promise<void>
   selectionMode: boolean
   isSelected: boolean
   onToggleSelect: (eventId: number) => void
@@ -23,6 +25,7 @@ export default function EventCard({
   onDelete,
   onUpdate,
   onDeleteImage,
+  onAddImage,
   selectionMode,
   isSelected,
   onToggleSelect,
@@ -33,6 +36,7 @@ export default function EventCard({
   const [imageSelectionMode, setImageSelectionMode] = useState(false)
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
   const [showImageDeleteConfirmation, setShowImageDeleteConfirmation] = useState(false)
+  const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false)
 
   // 格式化日期
   const formattedDate = format(new Date(event.create_time), "MM月dd日 HH:mm")
@@ -112,6 +116,11 @@ export default function EventCard({
     setImageSelectionMode(false)
   }
 
+  const handleAddImage = (imageData: any) => {
+    onAddImage(event.id, imageData)
+    setShowImageSelectionDialog(false)
+  }
+
   return (
     <>
       <div
@@ -144,6 +153,16 @@ export default function EventCard({
               <div className={`${statusInfo.color} text-white text-xs px-2 py-1 rounded-full`}>{statusInfo.text}</div>
               {!selectionMode && !imageSelectionMode && (
                 <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowImageSelectionDialog(true)
+                    }}
+                    className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500 hover:bg-green-100"
+                    aria-label="关联图片"
+                  >
+                    <Plus size={16} />
+                  </button>
                   {event.candidate_images && event.candidate_images.length > 0 && (
                     <button
                       onClick={(e) => {
@@ -272,6 +291,13 @@ export default function EventCard({
       />
 
       <EditEventForm event={event} isOpen={showEditForm} onClose={() => setShowEditForm(false)} onSave={onUpdate} />
+
+      <ImageSelectionDialog
+        isOpen={showImageSelectionDialog}
+        onClose={() => setShowImageSelectionDialog(false)}
+        onSelectImage={handleAddImage}
+        eventId={event.id}
+      />
     </>
   )
 }
