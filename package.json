@@ -61,7 +61,9 @@
     "@emotion/is-prop-valid": "latest",
     "framer-motion": "latest",
     "@heroicons/react": "latest",
-    "axios": "latest"
+    "axios": "latest",
+    "docx": "latest",
+    "file-saver": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

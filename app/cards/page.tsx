@@ -7,6 +7,7 @@ import Link from "next/link"
 import { ChevronLeft, Filter, CheckSquare, X, Layers } from "lucide-react"
 import EventCard from "@/components/event-card"
 import MergeConfirmation from "@/components/merge-confirmation"
+import GenerateDocumentButton from "@/components/generate-document-button"
 import type { Event } from "@/types/event"
 
 export default function CardsPage() {
@@ -219,16 +220,19 @@ export default function CardsPage() {
         </div>
         <div className="flex items-center space-x-2">
           {selectionMode ? (
-            <button
-              onClick={handleShowMergeConfirmation}
-              disabled={selectedEventIds.length < 2}
-              className={`flex items-center text-sm font-medium ${
-                selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
-              }`}
-            >
-              <Layers size={16} className="mr-1" />
-              <span>合并</span>
-            </button>
+            <>
+              <button
+                onClick={handleShowMergeConfirmation}
+                disabled={selectedEventIds.length < 2}
+                className={`flex items-center text-sm font-medium ${
+                  selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
+                }`}
+              >
+                <Layers size={16} className="mr-1" />
+                <span>合并</span>
+              </button>
+              <GenerateDocumentButton selectedEventIds={selectedEventIds} />
+            </>
           ) : (
             <>
               <button
