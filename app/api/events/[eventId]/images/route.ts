@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const { eventId } = params
+    const eventId = params.eventId
     const body = await request.json()
 
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}/images`, {

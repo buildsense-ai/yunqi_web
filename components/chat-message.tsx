@@ -69,7 +69,7 @@ export default function ChatMessage({ message, isCurrentUser }: ChatMessageProps
             ${isCurrentUser ? "bg-[#007AFF] text-white rounded-tr-sm" : "bg-white text-black rounded-tl-sm"}
           `}
         >
-          {message.message_content.text}
+          {message.message_content?.text || ""}
 
           {isLongPressed && (
             <motion.div

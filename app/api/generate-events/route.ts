@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server"
 
-export async function POST() {
+export async function GET() {
   try {
     const response = await fetch("http://43.139.19.144:8000/generate_events", {
-      method: "POST",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },

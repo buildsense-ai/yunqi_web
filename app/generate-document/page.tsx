@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
@@ -46,6 +46,9 @@ export default function GenerateDocumentPage() {
   const searchParams = useSearchParams()
   const eventIds = searchParams.get("eventIds")?.split(",").map(Number) || []
 
+  // Add a ref to track if we've already fetched events
+  const fetchedRef = useRef(false)
+
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
   const [documentData, setDocumentData] = useState<DocumentData | null>(null)
   const [selectedEvents, setSelectedEvents] = useState<Event[]>([])
@@ -54,14 +57,15 @@ export default function GenerateDocumentPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
 
-  // Fetch selected events
+  // Fetch selected events only once when component mounts
   useEffect(() => {
-    if (eventIds.length > 0) {
+    if (eventIds.length > 0 && !fetchedRef.current) {
+      fetchedRef.current = true
       fetchSelectedEvents()
-    } else {
+    } else if (eventIds.length === 0) {
       setLoading(false)
     }
-  }, [eventIds])
+  }, [eventIds]) // Only depend on eventIds
 
   const fetchSelectedEvents = async () => {
     try {

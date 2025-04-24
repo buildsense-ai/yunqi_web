@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
 import { CalendarIcon, AlertCircle } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
@@ -18,9 +18,13 @@ interface DocumentFormProps {
 export default function DocumentForm({ template, selectedEvents, onFormDataChange }: DocumentFormProps) {
   const [formFields, setFormFields] = useState<Record<string, DocumentField>>({})
   const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const initializedRef = useRef(false)
 
-  // Initialize form fields based on template
+  // Initialize form fields based on template - only run once when template or events change
   useEffect(() => {
+    if (initializedRef.current) return
+    initializedRef.current = true
+
     const initialFields: Record<string, DocumentField> = {}
 
     // Add template required fields
@@ -74,16 +78,24 @@ export default function DocumentForm({ template, selectedEvents, onFormDataChang
     setFormFields(initialFields)
   }, [template, selectedEvents])
 
-  // Update parent component when form data changes
+  // Update parent component when form data changes - use a ref to prevent unnecessary calls
+  const formDataRef = useRef<DocumentData | null>(null)
+
   useEffect(() => {
     validateForm()
 
-    onFormDataChange({
+    const documentData = {
       templateId: template.id,
       fields: formFields,
       eventIds: selectedEvents.map((event) => event.id),
-    })
-  }, [formFields, template.id, selectedEvents])
+    }
+
+    // Only update if data has changed
+    if (JSON.stringify(documentData) !== JSON.stringify(formDataRef.current)) {
+      formDataRef.current = documentData
+      onFormDataChange(documentData)
+    }
+  }, [formFields, template.id, selectedEvents, onFormDataChange])
 
   const getFieldLabel = (key: string): string => {
     const labels: Record<string, string> = {

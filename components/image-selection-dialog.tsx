@@ -53,9 +53,14 @@ export default function ImageSelectionDialog({ isOpen, onClose, onSelectImage, e
   // 过滤消息
   const filteredMessages = messages.filter((message) => {
     if (!searchTerm) return true
+
+    // Add null checks to safely handle undefined properties
+    const messageText = message.message_content?.text || ""
+    const senderId = message.sender_id || ""
+
     return (
-      message.message_content.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      message.sender_id.toLowerCase().includes(searchTerm.toLowerCase())
+      messageText.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      senderId.toLowerCase().includes(searchTerm.toLowerCase())
     )
   })
 
@@ -173,7 +178,7 @@ export default function ImageSelectionDialog({ isOpen, onClose, onSelectImage, e
                     {/* 消息内容 */}
                     <div className="flex-1">
                       <div className="flex justify-between items-start">
-                        <p className="text-sm font-medium">用户 {message.sender_id.substring(0, 6)}</p>
+                        <p className="text-sm font-medium">用户 {(message.sender_id || "").substring(0, 6)}</p>
                         <p className="text-xs text-gray-500">
                           {new Date(message.create_time).toLocaleTimeString([], {
                             hour: "2-digit",
@@ -181,7 +186,7 @@ export default function ImageSelectionDialog({ isOpen, onClose, onSelectImage, e
                           })}
                         </p>
                       </div>
-                      <p className="text-sm text-gray-700 mt-1">{message.message_content.text}</p>
+                      <p className="text-sm text-gray-700 mt-1">{message.message_content?.text || ""}</p>
 
                       {/* 图片预览 */}
                       {message.image_url && (

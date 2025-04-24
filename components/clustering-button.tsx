@@ -12,8 +12,8 @@ export default function ClusteringButton() {
   const handleCluster = async () => {
     try {
       setIsLoading(true)
-      // Call the clustering API endpoint
-      await axios.post("/api/generate-events")
+      // Call the clustering API endpoint with GET method
+      await axios.get("/api/generate-events")
       // Show success state briefly
       setTimeout(() => {
         setIsLoading(false)
