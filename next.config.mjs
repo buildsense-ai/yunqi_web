@@ -7,8 +7,9 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
+    domains: ['43.139.19.144'],
     unoptimized: true,
   },
-}
+};
 
-export default nextConfig
+export default nextConfig;

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import ChatMessage from "@/components/chat-message"
 import type { Message } from "@/types/message"
 import ClusteringButton from "@/components/clustering-button"
+import ViewCardsButton from "@/components/view-cards-button"
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -54,6 +55,7 @@ export default function ChatPage() {
         </div>
         <div className="flex items-center space-x-3">
           <ClusteringButton />
+          <ViewCardsButton />
           <button className="text-[#007AFF] text-sm font-medium">Info</button>
         </div>
       </div>
