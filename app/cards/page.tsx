@@ -85,6 +85,32 @@ export default function CardsPage() {
     }
   }
 
+  // 删除图片
+  const handleDeleteImage = async (eventId: number, messageId: string) => {
+    try {
+      await axios.delete(`/api/events/${eventId}/images/${messageId}`)
+
+      // 更新列表中的卡片，移除已删除的图片
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId && event.candidate_images) {
+            return {
+              ...event,
+              candidate_images: event.candidate_images.filter((img) => img.message_id !== messageId),
+            }
+          }
+          return event
+        }),
+      )
+
+      showToast("图片已成功删除", "success")
+    } catch (error) {
+      console.error("Error deleting image:", error)
+      showToast("删除图片失败，请重试", "error")
+      throw error
+    }
+  }
+
   // 切换选择模式
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode)
@@ -226,6 +252,7 @@ export default function CardsPage() {
                   event={event}
                   onDelete={handleDeleteEvent}
                   onUpdate={handleUpdateEvent}
+                  onDeleteImage={handleDeleteImage}
                   selectionMode={selectionMode}
                   isSelected={selectedEventIds.includes(event.id)}
                   onToggleSelect={toggleEventSelection}

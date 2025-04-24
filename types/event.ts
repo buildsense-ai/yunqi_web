@@ -21,7 +21,7 @@ export interface Event {
   is_merged: boolean
   create_time: string
   messages: EventMessage[]
-  candidate_images: EventImage[]
+  candidate_images?: EventImage[]
   status: string
   update_time: string
 }

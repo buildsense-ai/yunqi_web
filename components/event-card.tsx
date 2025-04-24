@@ -3,15 +3,16 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import type { Event } from "@/types/event"
-import Image from "next/image"
-import { Trash2, Edit2, Check } from "lucide-react"
+import { Trash2, Edit2, Check, ImageIcon } from "lucide-react"
 import ConfirmationDialog from "./confirmation-dialog"
 import EditEventForm from "./edit-event-form"
+import SingleEventImage from "./event-image"
 
 interface EventCardProps {
   event: Event
   onDelete: (eventId: number) => Promise<void>
   onUpdate: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
+  onDeleteImage: (eventId: number, messageId: string) => Promise<void>
   selectionMode: boolean
   isSelected: boolean
   onToggleSelect: (eventId: number) => void
@@ -21,6 +22,7 @@ export default function EventCard({
   event,
   onDelete,
   onUpdate,
+  onDeleteImage,
   selectionMode,
   isSelected,
   onToggleSelect,
@@ -28,6 +30,9 @@ export default function EventCard({
   const [isDeleting, setIsDeleting] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
+  const [imageSelectionMode, setImageSelectionMode] = useState(false)
+  const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
+  const [showImageDeleteConfirmation, setShowImageDeleteConfirmation] = useState(false)
 
   // 格式化日期
   const formattedDate = format(new Date(event.create_time), "MM月dd日 HH:mm")
@@ -75,6 +80,38 @@ export default function EventCard({
     }
   }
 
+  const toggleImageSelectionMode = () => {
+    setImageSelectionMode(!imageSelectionMode)
+    setSelectedImageIds([])
+  }
+
+  const toggleImageSelection = (messageId: string) => {
+    setSelectedImageIds((prevIds) => {
+      if (prevIds.includes(messageId)) {
+        return prevIds.filter((id) => id !== messageId)
+      } else {
+        return [...prevIds, messageId]
+      }
+    })
+  }
+
+  const handleDeleteSelectedImages = async () => {
+    setShowImageDeleteConfirmation(false)
+
+    // 逐个删除选中的图片
+    for (const messageId of selectedImageIds) {
+      try {
+        await onDeleteImage(event.id, messageId)
+      } catch (error) {
+        console.error(`Error deleting image ${messageId}:`, error)
+      }
+    }
+
+    // 重置选择状态
+    setSelectedImageIds([])
+    setImageSelectionMode(false)
+  }
+
   return (
     <>
       <div
@@ -105,8 +142,20 @@ export default function EventCard({
             </div>
             <div className="flex items-center gap-2">
               <div className={`${statusInfo.color} text-white text-xs px-2 py-1 rounded-full`}>{statusInfo.text}</div>
-              {!selectionMode && (
+              {!selectionMode && !imageSelectionMode && (
                 <>
+                  {event.candidate_images && event.candidate_images.length > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleImageSelectionMode()
+                      }}
+                      className="w-8 h-8 rounded-full bg-purple-50 flex items-center justify-center text-purple-500 hover:bg-purple-100"
+                      aria-label="选择图片"
+                    >
+                      <ImageIcon size={16} />
+                    </button>
+                  )}
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
@@ -134,6 +183,35 @@ export default function EventCard({
                   </button>
                 </>
               )}
+
+              {/* 图片选择模式下的操作按钮 */}
+              {imageSelectionMode && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (selectedImageIds.length > 0) {
+                        setShowImageDeleteConfirmation(true)
+                      }
+                    }}
+                    disabled={selectedImageIds.length === 0}
+                    className={`text-sm font-medium ${
+                      selectedImageIds.length === 0 ? "text-gray-400" : "text-red-500"
+                    }`}
+                  >
+                    删除 ({selectedImageIds.length})
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      toggleImageSelectionMode()
+                    }}
+                    className="text-sm font-medium text-[#007AFF]"
+                  >
+                    取消
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -152,14 +230,15 @@ export default function EventCard({
           {event.candidate_images && event.candidate_images.length > 0 && (
             <div className="mt-3 grid grid-cols-2 gap-2">
               {event.candidate_images.map((image) => (
-                <div key={image.image_key} className="relative h-32 rounded-md overflow-hidden">
-                  <Image
-                    src={image.image_data || "/placeholder.svg?height=128&width=128&query=event image"}
-                    alt="Event image"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
+                <SingleEventImage
+                  key={image.image_key}
+                  image={image}
+                  eventId={event.id}
+                  onDelete={onDeleteImage}
+                  selectionMode={imageSelectionMode}
+                  isSelected={selectedImageIds.includes(image.message_id)}
+                  onToggleSelect={toggleImageSelection}
+                />
               ))}
             </div>
           )}
@@ -180,6 +259,16 @@ export default function EventCard({
         cancelText="取消"
         onConfirm={handleConfirmDelete}
         onCancel={() => setShowConfirmation(false)}
+      />
+
+      <ConfirmationDialog
+        isOpen={showImageDeleteConfirmation}
+        title="删除图片"
+        message={`确定要删除选中的 ${selectedImageIds.length} 张图片吗？此操作无法撤销。`}
+        confirmText="删除"
+        cancelText="取消"
+        onConfirm={handleDeleteSelectedImages}
+        onCancel={() => setShowImageDeleteConfirmation(false)}
       />
 
       <EditEventForm event={event} isOpen={showEditForm} onClose={() => setShowEditForm(false)} onSave={onUpdate} />
