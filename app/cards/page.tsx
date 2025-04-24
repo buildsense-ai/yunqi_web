@@ -4,8 +4,9 @@ import { useEffect, useState } from "react"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { ChevronLeft, Filter } from "lucide-react"
+import { ChevronLeft, Filter, CheckSquare, X, Layers } from "lucide-react"
 import EventCard from "@/components/event-card"
+import MergeConfirmation from "@/components/merge-confirmation"
 import type { Event } from "@/types/event"
 
 export default function CardsPage() {
@@ -13,6 +14,10 @@ export default function CardsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
+  const [selectionMode, setSelectionMode] = useState(false)
+  const [selectedEventIds, setSelectedEventIds] = useState<number[]>([])
+  const [showMergeConfirmation, setShowMergeConfirmation] = useState(false)
+  const [isMerging, setIsMerging] = useState(false)
 
   const fetchEvents = async () => {
     try {
@@ -80,23 +85,109 @@ export default function CardsPage() {
     }
   }
 
+  // 切换选择模式
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode)
+    setSelectedEventIds([])
+  }
+
+  // 切换卡片选择状态
+  const toggleEventSelection = (eventId: number) => {
+    setSelectedEventIds((prevIds) => {
+      if (prevIds.includes(eventId)) {
+        return prevIds.filter((id) => id !== eventId)
+      } else {
+        return [...prevIds, eventId]
+      }
+    })
+  }
+
+  // 显示合并确认对话框
+  const handleShowMergeConfirmation = () => {
+    if (selectedEventIds.length < 2) {
+      showToast("请至少选择两张卡片进行合并", "error")
+      return
+    }
+    setShowMergeConfirmation(true)
+  }
+
+  // 合并卡片
+  const handleMergeEvents = async () => {
+    if (selectedEventIds.length < 2) {
+      showToast("请至少选择两张卡片进行合并", "error")
+      return
+    }
+
+    setIsMerging(true)
+    try {
+      const response = await axios.post("/api/merge-events", {
+        event_ids: selectedEventIds,
+      })
+
+      // 刷新卡片列表
+      await fetchEvents()
+
+      // 退出选择模式
+      setSelectionMode(false)
+      setSelectedEventIds([])
+      setShowMergeConfirmation(false)
+
+      showToast("卡片已成功合并", "success")
+    } catch (error) {
+      console.error("Error merging events:", error)
+      showToast("合并卡片失败，请重试", "error")
+    } finally {
+      setIsMerging(false)
+    }
+  }
+
   return (
     <div className="flex flex-col h-screen bg-[#F2F2F7]">
       {/* iOS-style header */}
       <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
         <div className="flex items-center">
-          <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
-            <ChevronLeft size={16} />
-            <span>返回</span>
-          </Link>
+          {selectionMode ? (
+            <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
+              <X size={16} className="mr-1" />
+              <span>取消</span>
+            </button>
+          ) : (
+            <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
+              <ChevronLeft size={16} />
+              <span>返回</span>
+            </Link>
+          )}
         </div>
         <div className="text-center">
-          <h1 className="font-semibold text-lg">事件卡片</h1>
+          <h1 className="font-semibold text-lg">
+            {selectionMode ? `已选择 ${selectedEventIds.length} 项` : "事件卡片"}
+          </h1>
         </div>
-        <div className="flex items-center">
-          <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-            <Filter size={16} className="text-gray-600" />
-          </button>
+        <div className="flex items-center space-x-2">
+          {selectionMode ? (
+            <button
+              onClick={handleShowMergeConfirmation}
+              disabled={selectedEventIds.length < 2}
+              className={`flex items-center text-sm font-medium ${
+                selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
+              }`}
+            >
+              <Layers size={16} className="mr-1" />
+              <span>合并</span>
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={toggleSelectionMode}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <CheckSquare size={16} className="text-gray-600" />
+              </button>
+              <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <Filter size={16} className="text-gray-600" />
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -131,7 +222,14 @@ export default function CardsPage() {
                   ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
                 }}
               >
-                <EventCard event={event} onDelete={handleDeleteEvent} onUpdate={handleUpdateEvent} />
+                <EventCard
+                  event={event}
+                  onDelete={handleDeleteEvent}
+                  onUpdate={handleUpdateEvent}
+                  selectionMode={selectionMode}
+                  isSelected={selectedEventIds.includes(event.id)}
+                  onToggleSelect={toggleEventSelection}
+                />
               </motion.div>
             ))}
           </AnimatePresence>
@@ -153,6 +251,15 @@ export default function CardsPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Merge confirmation dialog */}
+      <MergeConfirmation
+        isOpen={showMergeConfirmation}
+        selectedCount={selectedEventIds.length}
+        onConfirm={handleMergeEvents}
+        onCancel={() => setShowMergeConfirmation(false)}
+        isLoading={isMerging}
+      />
     </div>
   )
 }

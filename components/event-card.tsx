@@ -4,7 +4,7 @@ import { useState } from "react"
 import { format } from "date-fns"
 import type { Event } from "@/types/event"
 import Image from "next/image"
-import { Trash2, Edit2 } from "lucide-react"
+import { Trash2, Edit2, Check } from "lucide-react"
 import ConfirmationDialog from "./confirmation-dialog"
 import EditEventForm from "./edit-event-form"
 
@@ -12,9 +12,19 @@ interface EventCardProps {
   event: Event
   onDelete: (eventId: number) => Promise<void>
   onUpdate: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
+  selectionMode: boolean
+  isSelected: boolean
+  onToggleSelect: (eventId: number) => void
 }
 
-export default function EventCard({ event, onDelete, onUpdate }: EventCardProps) {
+export default function EventCard({
+  event,
+  onDelete,
+  onUpdate,
+  selectionMode,
+  isSelected,
+  onToggleSelect,
+}: EventCardProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [showConfirmation, setShowConfirmation] = useState(false)
   const [showEditForm, setShowEditForm] = useState(false)
@@ -59,11 +69,35 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
     }
   }
 
+  const handleCardClick = () => {
+    if (selectionMode) {
+      onToggleSelect(event.id)
+    }
+  }
+
   return (
     <>
-      <div className={`bg-white rounded-xl shadow-sm overflow-hidden mb-4 ${isDeleting ? "opacity-50" : ""}`}>
+      <div
+        className={`bg-white rounded-xl shadow-sm overflow-hidden mb-4 ${isDeleting ? "opacity-50" : ""} ${
+          selectionMode ? "cursor-pointer" : ""
+        } ${isSelected && selectionMode ? "ring-2 ring-[#007AFF]" : ""}`}
+        onClick={handleCardClick}
+      >
+        {/* 选择指示器 */}
+        {selectionMode && (
+          <div className="absolute top-2 left-2 z-10">
+            <div
+              className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                isSelected ? "bg-[#007AFF]" : "bg-gray-200"
+              }`}
+            >
+              {isSelected && <Check size={14} className="text-white" />}
+            </div>
+          </div>
+        )}
+
         {/* 卡片头部 */}
-        <div className="p-4 border-b border-gray-100">
+        <div className={`p-4 border-b border-gray-100 ${selectionMode ? "pl-10" : ""}`}>
           <div className="flex justify-between items-start">
             <div>
               <h3 className="font-semibold text-lg">{event.summary}</h3>
@@ -71,25 +105,35 @@ export default function EventCard({ event, onDelete, onUpdate }: EventCardProps)
             </div>
             <div className="flex items-center gap-2">
               <div className={`${statusInfo.color} text-white text-xs px-2 py-1 rounded-full`}>{statusInfo.text}</div>
-              <button
-                onClick={handleEditClick}
-                className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100"
-                aria-label="编辑卡片"
-              >
-                <Edit2 size={16} />
-              </button>
-              <button
-                onClick={handleDeleteClick}
-                disabled={isDeleting}
-                className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100"
-                aria-label="删除卡片"
-              >
-                {isDeleting ? (
-                  <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                ) : (
-                  <Trash2 size={16} />
-                )}
-              </button>
+              {!selectionMode && (
+                <>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEditClick()
+                    }}
+                    className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100"
+                    aria-label="编辑卡片"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleDeleteClick()
+                    }}
+                    disabled={isDeleting}
+                    className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center text-red-500 hover:bg-red-100"
+                    aria-label="删除卡片"
+                  >
+                    {isDeleting ? (
+                      <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
