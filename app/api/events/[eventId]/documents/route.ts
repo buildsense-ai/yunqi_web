@@ -12,7 +12,7 @@ export async function POST(request: Request, { params }: { params: { eventId: st
     formData.append("file", new Blob([binaryData]), "document.docx")
 
     // Send the request to the backend
-    const response = await fetch(`http://localhost:8000/upload_doc?event_id=${eventId}`, {
+    const response = await fetch(`http://43.139.19.144:8000/upload_doc?event_id=${eventId}`, {
       method: "POST",
       body: formData,
     })

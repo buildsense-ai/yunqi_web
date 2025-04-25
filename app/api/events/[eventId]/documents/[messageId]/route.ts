@@ -5,7 +5,7 @@ export async function DELETE(request: Request, { params }: { params: { eventId: 
     const { eventId, messageId } = params
 
     // Call the backend API to delete the document
-    const response = await fetch(`http://localhost:8000/delete_doc?event_id=${eventId}&message_id=${messageId}`, {
+    const response = await fetch(`http://43.139.19.144:8000/delete_doc?event_id=${eventId}&message_id=${messageId}`, {
       method: "DELETE",
     })
 
