@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const eventId = params.eventId
+    const { eventId } = params
     const url = new URL(request.url)
     const action = url.searchParams.get("action")
 
@@ -45,7 +45,8 @@ export async function GET(request: Request, { params }: { params: { eventId: str
 
 export async function PUT(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const eventId = params.eventId
+    // Ensure params is properly awaited
+    const { eventId } = params
     const body = await request.json()
 
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {

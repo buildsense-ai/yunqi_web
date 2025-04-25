@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function POST(request: Request, { params }: { params: { eventId: string } }) {
   try {
-    const eventId = params.eventId
+    const { eventId } = params
 
     // Get the binary data from the request
     const binaryData = await request.arrayBuffer()
