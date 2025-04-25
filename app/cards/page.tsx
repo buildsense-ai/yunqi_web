@@ -46,13 +46,19 @@ export default function CardsPage() {
     }, 3000)
   }
 
-  // 删除卡片
+  // 删除卡片 - Updated to use GET with action=delete
   const handleDeleteEvent = async (eventId: number) => {
     try {
-      await axios.delete(`/api/events/${eventId}`)
-      // 从列表中移除已删除的卡片
-      setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId))
-      showToast("卡片已成功删除", "success")
+      const response = await axios.get(`/api/events/${eventId}?action=delete`)
+
+      // Check if deletion was successful
+      if (response.data && response.data.message) {
+        // 从列表中移除已删除的卡片
+        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId))
+        showToast("卡片已成功删除", "success")
+      } else {
+        throw new Error("Deletion response did not contain expected data")
+      }
     } catch (error) {
       console.error("Error deleting event:", error)
       showToast("删除卡片失败，请重试", "error")
@@ -175,9 +181,8 @@ export default function CardsPage() {
 
     setIsMerging(true)
     try {
-      const response = await axios.post("/api/merge-events", {
-        event_ids: selectedEventIds,
-      })
+      // Send just the array of IDs instead of an object with event_ids property
+      const response = await axios.post("/api/merge-events", selectedEventIds)
 
       // 刷新卡片列表
       await fetchEvents()

@@ -2,14 +2,21 @@ import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
+    // Get the array of event IDs directly from the request body
+    const eventIds = await request.json()
+
+    // Validate that we received an array
+    if (!Array.isArray(eventIds)) {
+      return NextResponse.json({ error: "Invalid request format. Expected an array of event IDs." }, { status: 400 })
+    }
 
     const response = await fetch("http://43.139.19.144:8000/merge-events", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
+      // Send the array directly
+      body: JSON.stringify(eventIds),
     })
 
     if (!response.ok) {

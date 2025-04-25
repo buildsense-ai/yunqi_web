@@ -1,11 +1,31 @@
 import { NextResponse } from "next/server"
 
-export async function DELETE(request: Request, { params }: { params: { eventId: string } }) {
+export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
     const eventId = params.eventId
+    const url = new URL(request.url)
+    const action = url.searchParams.get("action")
 
+    // If action is "delete", handle deletion
+    if (action === "delete") {
+      const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {
+        method: "GET", // Using GET for deletion as per API requirements
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error(`API responded with status: ${response.status}`)
+      }
+
+      const data = await response.json()
+      return NextResponse.json(data)
+    }
+
+    // If no action specified, just get the event
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {
-      method: "DELETE",
+      method: "GET",
       headers: {
         "Content-Type": "application/json",
       },
@@ -15,10 +35,11 @@ export async function DELETE(request: Request, { params }: { params: { eventId: 
       throw new Error(`API responded with status: ${response.status}`)
     }
 
-    return NextResponse.json({ success: true }, { status: 200 })
+    const data = await response.json()
+    return NextResponse.json(data)
   } catch (error) {
-    console.error(`Error deleting event ${params.eventId}:`, error)
-    return NextResponse.json({ error: "Failed to delete event" }, { status: 500 })
+    console.error(`Error with event ${params.eventId}:`, error)
+    return NextResponse.json({ error: "Operation failed" }, { status: 500 })
   }
 }
 
