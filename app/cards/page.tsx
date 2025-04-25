@@ -172,6 +172,32 @@ export default function CardsPage() {
     }
   }
 
+  // Add the handleDeleteMessage function
+  const handleDeleteMessage = async (eventId: number, messageId: string) => {
+    try {
+      await axios.delete(`/api/events/${eventId}/messages/${messageId}`)
+
+      // Update the events list, remove the deleted message
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId) {
+            return {
+              ...event,
+              messages: event.messages.filter((msg) => msg.message_id !== messageId),
+            }
+          }
+          return event
+        }),
+      )
+
+      showToast("消息已成功删除", "success")
+    } catch (error) {
+      console.error("Error deleting message:", error)
+      showToast("删除消息失败，请重试", "error")
+      throw error
+    }
+  }
+
   // 切换选择模式
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode)
@@ -318,6 +344,7 @@ export default function CardsPage() {
                   onDeleteImage={handleDeleteImage}
                   onAddImage={handleAddImage}
                   onDeleteDocument={handleDeleteDocument}
+                  onDeleteMessage={handleDeleteMessage}
                   onUploadSuccess={fetchEvents}
                   selectionMode={selectionMode}
                   isSelected={selectedEventIds.includes(event.id)}

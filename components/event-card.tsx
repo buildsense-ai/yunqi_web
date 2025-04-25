@@ -10,6 +10,7 @@ import SingleEventImage from "./event-image"
 import ImageSelectionDialog from "./image-selection-dialog"
 import EventDocument from "./event-document"
 import DocumentUploadDialog from "./document-upload-dialog"
+import EventMessage from "./event-message"
 
 interface EventCardProps {
   event: Event
@@ -18,6 +19,7 @@ interface EventCardProps {
   onDeleteImage: (eventId: number, messageId: string) => Promise<void>
   onAddImage: (eventId: number, imageData: any) => Promise<void>
   onDeleteDocument?: (eventId: number, messageId: string) => Promise<void>
+  onDeleteMessage?: (eventId: number, messageId: string) => Promise<void>
   onUploadSuccess?: () => void
   selectionMode: boolean
   isSelected: boolean
@@ -31,6 +33,7 @@ export default function EventCard({
   onDeleteImage,
   onAddImage,
   onDeleteDocument,
+  onDeleteMessage,
   onUploadSuccess,
   selectionMode,
   isSelected,
@@ -256,10 +259,7 @@ export default function EventCard({
         <div className="p-4">
           {/* 消息内容 */}
           {event.messages.map((message) => (
-            <div key={message.message_id} className="mb-3">
-              <p className="text-sm text-gray-700">{message.content}</p>
-              <p className="text-xs text-gray-500 mt-1">{format(new Date(message.timestamp), "HH:mm")}</p>
-            </div>
+            <EventMessage key={message.message_id} message={message} eventId={event.id} onDelete={onDeleteMessage} />
           ))}
 
           {/* 图片内容 */}
