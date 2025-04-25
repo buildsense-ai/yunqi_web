@@ -6,15 +6,17 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { X } from "lucide-react"
 import type { Event } from "@/types/event"
+import EditableMessage from "./editable-message"
 
 interface EditEventFormProps {
   event: Event
   isOpen: boolean
   onClose: () => void
   onSave: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
+  onDeleteMessage?: (eventId: number, messageId: string) => Promise<void>
 }
 
-export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEventFormProps) {
+export default function EditEventForm({ event, isOpen, onClose, onSave, onDeleteMessage }: EditEventFormProps) {
   const [formData, setFormData] = useState({
     summary: "",
     category: "",
@@ -22,6 +24,7 @@ export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEv
   })
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [messages, setMessages] = useState(event.messages || [])
 
   // 当事件数据变化时更新表单
   useEffect(() => {
@@ -31,6 +34,7 @@ export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEv
         category: event.category || "",
         status: event.status || "0",
       })
+      setMessages(event.messages || [])
     }
   }, [event])
 
@@ -61,6 +65,18 @@ export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEv
     }
   }
 
+  const handleDeleteMessage = async (eventId: number, messageId: string) => {
+    if (!onDeleteMessage) return
+
+    try {
+      await onDeleteMessage(eventId, messageId)
+      // Update local state to reflect the deletion
+      setMessages(messages.filter((msg) => msg.message_id !== messageId))
+    } catch (error) {
+      console.error("Error deleting message:", error)
+    }
+  }
+
   if (!isOpen) return null
 
   return (
@@ -79,7 +95,7 @@ export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEv
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="relative bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden"
+        className="relative bg-white rounded-xl shadow-lg w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100">
@@ -90,88 +106,109 @@ export default function EditEventForm({ event, isOpen, onClose, onSave }: EditEv
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-4">
-          <div className="space-y-4">
-            {/* Summary */}
-            <div>
-              <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-1">
-                概述
-              </label>
-              <input
-                type="text"
-                id="summary"
-                name="summary"
-                value={formData.summary}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
-                placeholder="事件概述"
-              />
-            </div>
+        <div className="overflow-y-auto p-4 flex-1">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-4">
+              {/* Summary */}
+              <div>
+                <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-1">
+                  概述
+                </label>
+                <input
+                  type="text"
+                  id="summary"
+                  name="summary"
+                  value={formData.summary}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
+                  placeholder="事件概述"
+                />
+              </div>
 
-            {/* Category */}
-            <div>
-              <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-                类别
-              </label>
-              <input
-                type="text"
-                id="category"
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
-                placeholder="事件类别"
-              />
-            </div>
+              {/* Category */}
+              <div>
+                <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
+                  类别
+                </label>
+                <input
+                  type="text"
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
+                  placeholder="事件类别"
+                />
+              </div>
 
-            {/* Status */}
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
-                状态
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
-              >
-                <option value="0">待处理</option>
-                <option value="1">整改中</option>
-                <option value="2">待复核</option>
-                <option value="3">已闭环</option>
-              </select>
-            </div>
+              {/* Status */}
+              <div>
+                <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                  状态
+                </label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#007AFF] focus:border-transparent"
+                >
+                  <option value="0">待处理</option>
+                  <option value="1">整改中</option>
+                  <option value="2">待复核</option>
+                  <option value="3">已闭环</option>
+                </select>
+              </div>
 
-            {/* Error message */}
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-
-            {/* Buttons */}
-            <div className="flex justify-end gap-2 pt-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-              >
-                取消
-              </button>
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-[#007AFF] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-              >
-                {isSaving ? (
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                    保存中...
+              {/* Messages section */}
+              {messages.length > 0 && (
+                <div>
+                  <h3 className="block text-sm font-medium text-gray-700 mb-2">消息列表</h3>
+                  <p className="text-xs text-gray-500 mb-2">点击消息右侧的删除按钮可删除该消息</p>
+                  <div className="space-y-2">
+                    {messages.map((message) => (
+                      <EditableMessage
+                        key={message.message_id}
+                        message={message}
+                        eventId={event.id}
+                        onDelete={handleDeleteMessage}
+                      />
+                    ))}
                   </div>
-                ) : (
-                  "保存"
-                )}
-              </button>
+                </div>
+              )}
+
+              {/* Error message */}
+              {error && <p className="text-red-500 text-sm">{error}</p>}
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
+
+        {/* Footer with buttons */}
+        <div className="flex justify-end gap-2 p-4 border-t border-gray-100">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+          >
+            取消
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            disabled={isSaving}
+            className="px-4 py-2 rounded-md shadow-sm text-sm font-medium text-white bg-[#007AFF] hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            {isSaving ? (
+              <div className="flex items-center">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                保存中...
+              </div>
+            ) : (
+              "保存"
+            )}
+          </button>
+        </div>
       </motion.div>
     </div>
   )

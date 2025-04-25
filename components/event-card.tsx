@@ -257,9 +257,9 @@ export default function EventCard({
 
         {/* 卡片内容 */}
         <div className="p-4">
-          {/* 消息内容 */}
+          {/* 消息内容 - using the simplified EventMessage component */}
           {event.messages.map((message) => (
-            <EventMessage key={message.message_id} message={message} eventId={event.id} onDelete={onDeleteMessage} />
+            <EventMessage key={message.message_id} message={message} eventId={event.id} />
           ))}
 
           {/* 图片内容 */}
@@ -322,7 +322,13 @@ export default function EventCard({
         onCancel={() => setShowImageDeleteConfirmation(false)}
       />
 
-      <EditEventForm event={event} isOpen={showEditForm} onClose={() => setShowEditForm(false)} onSave={onUpdate} />
+      <EditEventForm
+        event={event}
+        isOpen={showEditForm}
+        onClose={() => setShowEditForm(false)}
+        onSave={onUpdate}
+        onDeleteMessage={onDeleteMessage}
+      />
 
       <ImageSelectionDialog
         isOpen={showImageSelectionDialog}
