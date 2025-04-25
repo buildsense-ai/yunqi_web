@@ -146,6 +146,32 @@ export default function CardsPage() {
     }
   }
 
+  // Add the handleDeleteDocument function
+  const handleDeleteDocument = async (eventId: number, messageId: string) => {
+    try {
+      await axios.delete(`/api/events/${eventId}/documents/${messageId}`)
+
+      // Update the events list, remove the deleted document
+      setEvents((prevEvents) =>
+        prevEvents.map((event) => {
+          if (event.id === eventId && event.documents) {
+            return {
+              ...event,
+              documents: event.documents.filter((doc) => doc.message_id !== messageId),
+            }
+          }
+          return event
+        }),
+      )
+
+      showToast("文档已成功删除", "success")
+    } catch (error) {
+      console.error("Error deleting document:", error)
+      showToast("删除文档失败，请重试", "error")
+      throw error
+    }
+  }
+
   // 切换选择模式
   const toggleSelectionMode = () => {
     setSelectionMode(!selectionMode)
@@ -291,6 +317,8 @@ export default function CardsPage() {
                   onUpdate={handleUpdateEvent}
                   onDeleteImage={handleDeleteImage}
                   onAddImage={handleAddImage}
+                  onDeleteDocument={handleDeleteDocument}
+                  onUploadSuccess={fetchEvents}
                   selectionMode={selectionMode}
                   isSelected={selectedEventIds.includes(event.id)}
                   onToggleSelect={toggleEventSelection}

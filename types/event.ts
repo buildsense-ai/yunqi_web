@@ -14,6 +14,14 @@ export interface EventImage {
   message_id: string
 }
 
+export interface EventDocument {
+  document_key: string
+  sender_id: string
+  timestamp: string
+  document_name: string
+  message_id: string
+}
+
 export interface Event {
   category: string
   summary: string
@@ -22,6 +30,7 @@ export interface Event {
   create_time: string
   messages: EventMessage[]
   candidate_images?: EventImage[]
+  documents?: EventDocument[]
   status: string
   update_time: string
 }

@@ -3,11 +3,13 @@
 import { useState } from "react"
 import { format } from "date-fns"
 import type { Event } from "@/types/event"
-import { Trash2, Edit2, Check, ImageIcon, Plus } from "lucide-react"
+import { Trash2, Edit2, Check, ImageIcon, Plus, FileText } from "lucide-react"
 import ConfirmationDialog from "./confirmation-dialog"
 import EditEventForm from "./edit-event-form"
 import SingleEventImage from "./event-image"
 import ImageSelectionDialog from "./image-selection-dialog"
+import EventDocument from "./event-document"
+import DocumentUploadDialog from "./document-upload-dialog"
 
 interface EventCardProps {
   event: Event
@@ -15,6 +17,8 @@ interface EventCardProps {
   onUpdate: (eventId: number, data: { summary?: string; category?: string; status?: string }) => Promise<void>
   onDeleteImage: (eventId: number, messageId: string) => Promise<void>
   onAddImage: (eventId: number, imageData: any) => Promise<void>
+  onDeleteDocument?: (eventId: number, messageId: string) => Promise<void>
+  onUploadSuccess?: () => void
   selectionMode: boolean
   isSelected: boolean
   onToggleSelect: (eventId: number) => void
@@ -26,6 +30,8 @@ export default function EventCard({
   onUpdate,
   onDeleteImage,
   onAddImage,
+  onDeleteDocument,
+  onUploadSuccess,
   selectionMode,
   isSelected,
   onToggleSelect,
@@ -37,6 +43,7 @@ export default function EventCard({
   const [selectedImageIds, setSelectedImageIds] = useState<string[]>([])
   const [showImageDeleteConfirmation, setShowImageDeleteConfirmation] = useState(false)
   const [showImageSelectionDialog, setShowImageSelectionDialog] = useState(false)
+  const [showDocumentUploadDialog, setShowDocumentUploadDialog] = useState(false)
 
   // 格式化日期
   const formattedDate = format(new Date(event.create_time), "MM月dd日 HH:mm")
@@ -156,6 +163,16 @@ export default function EventCard({
                   <button
                     onClick={(e) => {
                       e.stopPropagation()
+                      setShowDocumentUploadDialog(true)
+                    }}
+                    className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500 hover:bg-blue-100"
+                    aria-label="上传文档"
+                  >
+                    <FileText size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
                       setShowImageSelectionDialog(true)
                     }}
                     className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center text-green-500 hover:bg-green-100"
@@ -261,6 +278,21 @@ export default function EventCard({
               ))}
             </div>
           )}
+
+          {/* 文档内容 */}
+          {event.documents && event.documents.length > 0 && (
+            <div className="mt-3 space-y-2">
+              <h4 className="text-sm font-medium text-gray-700">文档</h4>
+              {event.documents.map((document) => (
+                <EventDocument
+                  key={document.document_key}
+                  document={document}
+                  eventId={event.id}
+                  onDelete={onDeleteDocument}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* 卡片底部 */}
@@ -297,6 +329,15 @@ export default function EventCard({
         onClose={() => setShowImageSelectionDialog(false)}
         onSelectImage={handleAddImage}
         eventId={event.id}
+      />
+
+      <DocumentUploadDialog
+        isOpen={showDocumentUploadDialog}
+        onClose={() => setShowDocumentUploadDialog(false)}
+        eventId={event.id}
+        onSuccess={() => {
+          if (onUploadSuccess) onUploadSuccess()
+        }}
       />
     </>
   )
