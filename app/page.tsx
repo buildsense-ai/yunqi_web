@@ -7,6 +7,7 @@ import ChatMessage from "@/components/chat-message"
 import type { Message } from "@/types/message"
 import ClusteringButton from "@/components/clustering-button"
 import ViewCardsButton from "@/components/view-cards-button"
+import UpdateMessagesButton from "@/components/update-messages-button"
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -54,6 +55,7 @@ export default function ChatPage() {
           <p className="text-xs text-gray-500">5 participants</p>
         </div>
         <div className="flex items-center space-x-3">
+          <UpdateMessagesButton />
           <ClusteringButton />
           <ViewCardsButton />
           <button className="text-[#007AFF] text-sm font-medium">Info</button>
