@@ -12,6 +12,9 @@ import { useCache } from "@/contexts/cache-context"
 import AuthGuard from "@/components/auth-guard"
 import LoginButton from "@/components/login-button"
 import axiosClient from "@/utils/axios-client"
+// 在 import 部分添加
+import { useDocuments } from "@/contexts/document-context"
+import type { AutoDocument } from "@/types/auto-document"
 
 export default function CardsPage() {
   const { events, setEvents, isCacheStale, invalidateEvents } = useCache()
@@ -24,6 +27,10 @@ export default function CardsPage() {
   const [isMerging, setIsMerging] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+  // 在 CardsPage 函数内，添加文档状态
+  const [documents, setDocuments] = useState<AutoDocument[]>([])
+  const [documentsLoading, setDocumentsLoading] = useState(true)
+  const { documentRefreshCounter } = useDocuments()
 
   const fetchEvents = async (force = false) => {
     // Skip fetching if cache is fresh and not forced
@@ -45,9 +52,30 @@ export default function CardsPage() {
     }
   }
 
+  // 添加获取文档的函数，放在 fetchEvents 函数后面
+  const fetchDocuments = async () => {
+    try {
+      setDocumentsLoading(true)
+      const response = await axiosClient.get("/api/documents")
+      setDocuments(response.data)
+    } catch (err) {
+      console.error("Error fetching documents:", err)
+    } finally {
+      setDocumentsLoading(false)
+    }
+  }
+
   useEffect(() => {
     fetchEvents()
+    fetchDocuments()
   }, [])
+
+  // 添加监听文档刷新的 useEffect
+  useEffect(() => {
+    if (documentRefreshCounter > 0) {
+      fetchDocuments()
+    }
+  }, [documentRefreshCounter])
 
   // 显示Toast消息
   const showToast = (message: string, type: "success" | "error") => {
@@ -418,6 +446,7 @@ export default function CardsPage() {
                       ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
                     }}
                   >
+                    {/* 在 EventCard 组件的 props 中添加 documents 和 documentsLoading */}
                     <EventCard
                       event={event}
                       onDelete={handleDeleteEvent}
@@ -430,6 +459,8 @@ export default function CardsPage() {
                       selectionMode={selectionMode}
                       isSelected={selectedEventIds.includes(event.id)}
                       onToggleSelect={toggleEventSelection}
+                      documents={documents}
+                      documentsLoading={documentsLoading}
                     />
                   </motion.div>
                 ))}

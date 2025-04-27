@@ -1,49 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { FileText, ExternalLink, Trash2 } from "lucide-react"
 import { useDocuments } from "@/contexts/document-context"
-import { useCache } from "@/contexts/cache-context"
 import axiosClient from "@/utils/axios-client"
+import type { AutoDocument } from "@/types/auto-document"
 
 interface AssociatedDocumentsProps {
   eventId: number
+  documents: AutoDocument[]
+  isLoading: boolean
 }
 
-export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProps) {
-  const [loading, setLoading] = useState(true)
+export default function AssociatedDocuments({ eventId, documents, isLoading }: AssociatedDocumentsProps) {
   const [error, setError] = useState<string | null>(null)
   const [deletingDocId, setDeletingDocId] = useState<number | null>(null)
   const [showToast, setShowToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
-  const { documentRefreshCounter, refreshDocuments } = useDocuments()
-  const { documents, setDocuments, isCacheStale } = useCache()
-
-  // Filter documents for this event
-  const eventDocuments = documents.filter((doc) => doc.event_id === eventId)
-
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      // Skip fetching if cache is fresh
-      if (!isCacheStale("documents")) {
-        setLoading(false)
-        return
-      }
-
-      try {
-        setLoading(true)
-        const response = await axiosClient.get("/api/documents")
-        setDocuments(response.data)
-        setError(null)
-      } catch (err) {
-        console.error("Error fetching documents:", err)
-        setError("获取文档失败")
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchDocuments()
-  }, [eventId, documentRefreshCounter, isCacheStale, setDocuments])
+  const { refreshDocuments } = useDocuments()
 
   // Extract filename from URL
   const getFileName = (url: string): string => {
@@ -56,9 +29,6 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     try {
       setDeletingDocId(docId)
       await axiosClient.delete(`/api/documents/${docId}`)
-
-      // Update local state to remove the deleted document
-      setDocuments(documents.filter((doc) => doc.id !== docId))
 
       // Show success toast
       setShowToast({ message: "文档已成功删除", type: "success" })
@@ -78,7 +48,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     }
   }
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="mt-3 flex items-center justify-center py-2">
         <div className="w-5 h-5 rounded-full border-2 border-blue-500 border-t-transparent animate-spin"></div>
@@ -90,7 +60,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     return <div className="mt-3 text-xs text-red-500 py-2">{error}</div>
   }
 
-  if (eventDocuments.length === 0) {
+  if (documents.length === 0) {
     return null
   }
 
@@ -98,7 +68,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     <div className="mt-3 space-y-2">
       <h4 className="text-sm font-medium text-gray-700">自动生成文档</h4>
       <div className="space-y-2">
-        {eventDocuments.map((doc) => (
+        {documents.map((doc) => (
           <div
             key={doc.id}
             className="flex items-center p-3 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors group relative"
