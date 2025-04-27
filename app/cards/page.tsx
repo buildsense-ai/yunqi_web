@@ -7,16 +7,15 @@ import { ChevronLeft, Filter, CheckSquare, X, Layers, Search } from "lucide-reac
 import EventCard from "@/components/event-card"
 import MergeConfirmation from "@/components/merge-confirmation"
 import GenerateDocumentButton from "@/components/generate-document-button"
-import { DocumentProvider } from "@/contexts/document-context"
+import { DocumentProvider, useDocuments } from "@/contexts/document-context"
 import { useCache } from "@/contexts/cache-context"
 import AuthGuard from "@/components/auth-guard"
 import LoginButton from "@/components/login-button"
 import axiosClient from "@/utils/axios-client"
-// 在 import 部分添加
-import { useDocuments } from "@/contexts/document-context"
 import type { AutoDocument } from "@/types/auto-document"
 
-export default function CardsPage() {
+// 创建一个内部组件，这样可以在 DocumentProvider 内部使用 useDocuments
+function CardsPageContent() {
   const { events, setEvents, isCacheStale, invalidateEvents } = useCache()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,7 +26,6 @@ export default function CardsPage() {
   const [isMerging, setIsMerging] = useState(false)
   const [showSearch, setShowSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
-  // 在 CardsPage 函数内，添加文档状态
   const [documents, setDocuments] = useState<AutoDocument[]>([])
   const [documentsLoading, setDocumentsLoading] = useState(true)
   const { documentRefreshCounter } = useDocuments()
@@ -52,7 +50,6 @@ export default function CardsPage() {
     }
   }
 
-  // 添加获取文档的函数，放在 fetchEvents 函数后面
   const fetchDocuments = async () => {
     try {
       setDocumentsLoading(true)
@@ -70,7 +67,6 @@ export default function CardsPage() {
     fetchDocuments()
   }, [])
 
-  // 添加监听文档刷新的 useEffect
   useEffect(() => {
     if (documentRefreshCounter > 0) {
       fetchDocuments()
@@ -305,194 +301,200 @@ export default function CardsPage() {
   })
 
   return (
-    <AuthGuard>
-      <DocumentProvider>
-        <div className="flex flex-col h-screen w-screen fixed inset-0 bg-[#F2F2F7] overflow-hidden">
-          {/* iOS-style header */}
-          <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between z-10">
-            <div className="flex items-center">
-              {selectionMode ? (
-                <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
-                  <X size={16} className="mr-1" />
-                  <span>取消</span>
-                </button>
-              ) : (
-                <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
-                  <ChevronLeft size={16} />
-                  <span>返回</span>
-                </Link>
-              )}
-            </div>
-            <div className="text-center">
-              <h1 className="font-semibold text-lg">
-                {selectionMode ? `已选择 ${selectedEventIds.length} 项` : "事件卡片"}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              {selectionMode ? (
-                <>
-                  <button
-                    onClick={handleShowMergeConfirmation}
-                    disabled={selectedEventIds.length < 2}
-                    className={`flex items-center text-sm font-medium ${
-                      selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
-                    }`}
-                  >
-                    <Layers size={16} className="mr-1" />
-                    <span>合并</span>
-                  </button>
-                  <GenerateDocumentButton selectedEventIds={selectedEventIds} />
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={toggleSelectionMode}
-                    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-                  >
-                    <CheckSquare size={16} className="text-gray-600" />
-                  </button>
-                  <button
-                    onClick={() => setShowSearch(!showSearch)}
-                    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-                  >
-                    <Filter size={16} className={`${showSearch ? "text-[#007AFF]" : "text-gray-600"}`} />
-                  </button>
-                  <LoginButton />
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* 搜索栏 */}
-          <AnimatePresence>
-            {showSearch && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="bg-white border-b border-gray-200 overflow-hidden"
+    <div className="flex flex-col h-screen w-screen fixed inset-0 bg-[#F2F2F7] overflow-hidden">
+      {/* iOS-style header */}
+      <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between z-10">
+        <div className="flex items-center">
+          {selectionMode ? (
+            <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
+              <X size={16} className="mr-1" />
+              <span>取消</span>
+            </button>
+          ) : (
+            <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
+              <ChevronLeft size={16} />
+              <span>返回</span>
+            </Link>
+          )}
+        </div>
+        <div className="text-center">
+          <h1 className="font-semibold text-lg">
+            {selectionMode ? `已选择 ${selectedEventIds.length} 项` : "事件卡片"}
+          </h1>
+        </div>
+        <div className="flex items-center space-x-2">
+          {selectionMode ? (
+            <>
+              <button
+                onClick={handleShowMergeConfirmation}
+                disabled={selectedEventIds.length < 2}
+                className={`flex items-center text-sm font-medium ${
+                  selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
+                }`}
               >
-                <div className="p-3 flex items-center">
-                  <div className="relative flex-1">
-                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="搜索卡片..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
-                      autoFocus
-                    />
-                    {searchTerm && (
-                      <button
-                        onClick={() => setSearchTerm("")}
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                      >
-                        <X size={16} />
-                      </button>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      setShowSearch(false)
-                      setSearchTerm("")
-                    }}
-                    className="ml-3 text-[#007AFF] text-sm font-medium"
-                  >
-                    取消
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <Layers size={16} className="mr-1" />
+                <span>合并</span>
+              </button>
+              <GenerateDocumentButton selectedEventIds={selectedEventIds} />
+            </>
+          ) : (
+            <>
+              <button
+                onClick={toggleSelectionMode}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <CheckSquare size={16} className="text-gray-600" />
+              </button>
+              <button
+                onClick={() => setShowSearch(!showSearch)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+              >
+                <Filter size={16} className={`${showSearch ? "text-[#007AFF]" : "text-gray-600"}`} />
+              </button>
+              <LoginButton />
+            </>
+          )}
+        </div>
+      </div>
 
-          {/* Cards content */}
-          <div className="flex-1 overflow-y-auto overscroll-none -webkit-overflow-scrolling-touch p-4">
-            {loading ? (
-              <div className="flex justify-center items-center h-32">
-                <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
-              </div>
-            ) : error ? (
-              <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
-                {error}
-                <button onClick={() => fetchEvents(true)} className="block mx-auto mt-2 text-[#007AFF] font-medium">
-                  重试
-                </button>
-              </div>
-            ) : events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                {searchTerm ? (
-                  <>
-                    <p>没有找到匹配的卡片</p>
-                    <button onClick={() => setSearchTerm("")} className="mt-2 text-[#007AFF] font-medium">
-                      清除搜索
-                    </button>
-                  </>
-                ) : (
-                  <p>暂无事件卡片</p>
+      {/* 搜索栏 */}
+      <AnimatePresence>
+        {showSearch && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="bg-white border-b border-gray-200 overflow-hidden"
+          >
+            <div className="p-3 flex items-center">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="搜索卡片..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                  autoFocus
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm("")}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  >
+                    <X size={16} />
+                  </button>
                 )}
               </div>
+              <button
+                onClick={() => {
+                  setShowSearch(false)
+                  setSearchTerm("")
+                }}
+                className="ml-3 text-[#007AFF] text-sm font-medium"
+              >
+                取消
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Cards content */}
+      <div className="flex-1 overflow-y-auto overscroll-none -webkit-overflow-scrolling-touch p-4">
+        {loading ? (
+          <div className="flex justify-center items-center h-32">
+            <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
+            {error}
+            <button onClick={() => fetchEvents(true)} className="block mx-auto mt-2 text-[#007AFF] font-medium">
+              重试
+            </button>
+          </div>
+        ) : events.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+            {searchTerm ? (
+              <>
+                <p>没有找到匹配的卡片</p>
+                <button onClick={() => setSearchTerm("")} className="mt-2 text-[#007AFF] font-medium">
+                  清除搜索
+                </button>
+              </>
             ) : (
-              <AnimatePresence>
-                {filteredEvents.map((event, index) => (
-                  <motion.div
-                    key={event.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, x: -100 }}
-                    transition={{
-                      duration: 0.3,
-                      delay: index * 0.05,
-                      ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
-                    }}
-                  >
-                    {/* 在 EventCard 组件的 props 中添加 documents 和 documentsLoading */}
-                    <EventCard
-                      event={event}
-                      onDelete={handleDeleteEvent}
-                      onUpdate={handleUpdateEvent}
-                      onDeleteImage={handleDeleteImage}
-                      onAddImage={handleAddImage}
-                      onDeleteDocument={handleDeleteDocument}
-                      onDeleteMessage={handleDeleteMessage}
-                      onUploadSuccess={() => fetchEvents(true)}
-                      selectionMode={selectionMode}
-                      isSelected={selectedEventIds.includes(event.id)}
-                      onToggleSelect={toggleEventSelection}
-                      documents={documents}
-                      documentsLoading={documentsLoading}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              <p>暂无事件卡片</p>
             )}
           </div>
-
-          {/* Toast notification */}
+        ) : (
           <AnimatePresence>
-            {toast && (
+            {filteredEvents.map((event, index) => (
               <motion.div
-                initial={{ opacity: 0, y: 50 }}
+                key={event.id}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 50 }}
-                className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
-                  toast.type === "success" ? "bg-green-500" : "bg-red-500"
-                } text-white`}
+                exit={{ opacity: 0, x: -100 }}
+                transition={{
+                  duration: 0.3,
+                  delay: index * 0.05,
+                  ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
+                }}
               >
-                {toast.message}
+                <EventCard
+                  event={event}
+                  onDelete={handleDeleteEvent}
+                  onUpdate={handleUpdateEvent}
+                  onDeleteImage={handleDeleteImage}
+                  onAddImage={handleAddImage}
+                  onDeleteDocument={handleDeleteDocument}
+                  onDeleteMessage={handleDeleteMessage}
+                  onUploadSuccess={() => fetchEvents(true)}
+                  selectionMode={selectionMode}
+                  isSelected={selectedEventIds.includes(event.id)}
+                  onToggleSelect={toggleEventSelection}
+                  documents={documents}
+                  documentsLoading={documentsLoading}
+                />
               </motion.div>
-            )}
+            ))}
           </AnimatePresence>
+        )}
+      </div>
 
-          {/* Merge confirmation dialog */}
-          <MergeConfirmation
-            isOpen={showMergeConfirmation}
-            selectedCount={selectedEventIds.length}
-            onConfirm={handleMergeEvents}
-            onCancel={() => setShowMergeConfirmation(false)}
-            isLoading={isMerging}
-          />
-        </div>
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
+              toast.type === "success" ? "bg-green-500" : "bg-red-500"
+            } text-white`}
+          >
+            {toast.message}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Merge confirmation dialog */}
+      <MergeConfirmation
+        isOpen={showMergeConfirmation}
+        selectedCount={selectedEventIds.length}
+        onConfirm={handleMergeEvents}
+        onCancel={() => setShowMergeConfirmation(false)}
+        isLoading={isMerging}
+      />
+    </div>
+  )
+}
+
+// 主组件，包装了 DocumentProvider
+export default function CardsPage() {
+  return (
+    <AuthGuard>
+      <DocumentProvider>
+        <CardsPageContent />
       </DocumentProvider>
     </AuthGuard>
   )
