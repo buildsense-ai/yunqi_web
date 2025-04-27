@@ -9,6 +9,7 @@ import EventCard from "@/components/event-card"
 import MergeConfirmation from "@/components/merge-confirmation"
 import GenerateDocumentButton from "@/components/generate-document-button"
 import type { Event } from "@/types/event"
+import { DocumentProvider } from "@/contexts/document-context"
 
 export default function CardsPage() {
   const [events, setEvents] = useState<Event[]>([])
@@ -254,132 +255,134 @@ export default function CardsPage() {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-[#F2F2F7]">
-      {/* iOS-style header */}
-      <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
-        <div className="flex items-center">
-          {selectionMode ? (
-            <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
-              <X size={16} className="mr-1" />
-              <span>取消</span>
-            </button>
+    <DocumentProvider>
+      <div className="flex flex-col h-screen bg-[#F2F2F7]">
+        {/* iOS-style header */}
+        <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+          <div className="flex items-center">
+            {selectionMode ? (
+              <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
+                <X size={16} className="mr-1" />
+                <span>取消</span>
+              </button>
+            ) : (
+              <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
+                <ChevronLeft size={16} />
+                <span>返回</span>
+              </Link>
+            )}
+          </div>
+          <div className="text-center">
+            <h1 className="font-semibold text-lg">
+              {selectionMode ? `已选择 ${selectedEventIds.length} 项` : "事件卡片"}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-2">
+            {selectionMode ? (
+              <>
+                <button
+                  onClick={handleShowMergeConfirmation}
+                  disabled={selectedEventIds.length < 2}
+                  className={`flex items-center text-sm font-medium ${
+                    selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
+                  }`}
+                >
+                  <Layers size={16} className="mr-1" />
+                  <span>合并</span>
+                </button>
+                <GenerateDocumentButton selectedEventIds={selectedEventIds} />
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={toggleSelectionMode}
+                  className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                >
+                  <CheckSquare size={16} className="text-gray-600" />
+                </button>
+                <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <Filter size={16} className="text-gray-600" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Cards content */}
+        <div className="flex-1 overflow-y-auto p-4">
+          {loading ? (
+            <div className="flex justify-center items-center h-32">
+              <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
+            </div>
+          ) : error ? (
+            <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
+              {error}
+              <button onClick={fetchEvents} className="block mx-auto mt-2 text-[#007AFF] font-medium">
+                重试
+              </button>
+            </div>
+          ) : events.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+              <p>暂无事件卡片</p>
+            </div>
           ) : (
-            <Link href="/" className="text-[#007AFF] text-sm font-medium flex items-center">
-              <ChevronLeft size={16} />
-              <span>返回</span>
-            </Link>
+            <AnimatePresence>
+              {events.map((event, index) => (
+                <motion.div
+                  key={event.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{
+                    duration: 0.3,
+                    delay: index * 0.05,
+                    ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
+                  }}
+                >
+                  <EventCard
+                    event={event}
+                    onDelete={handleDeleteEvent}
+                    onUpdate={handleUpdateEvent}
+                    onDeleteImage={handleDeleteImage}
+                    onAddImage={handleAddImage}
+                    onDeleteDocument={handleDeleteDocument}
+                    onDeleteMessage={handleDeleteMessage}
+                    onUploadSuccess={fetchEvents}
+                    selectionMode={selectionMode}
+                    isSelected={selectedEventIds.includes(event.id)}
+                    onToggleSelect={toggleEventSelection}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           )}
         </div>
-        <div className="text-center">
-          <h1 className="font-semibold text-lg">
-            {selectionMode ? `已选择 ${selectedEventIds.length} 项` : "事件卡片"}
-          </h1>
-        </div>
-        <div className="flex items-center space-x-2">
-          {selectionMode ? (
-            <>
-              <button
-                onClick={handleShowMergeConfirmation}
-                disabled={selectedEventIds.length < 2}
-                className={`flex items-center text-sm font-medium ${
-                  selectedEventIds.length < 2 ? "text-gray-400" : "text-[#007AFF]"
-                }`}
-              >
-                <Layers size={16} className="mr-1" />
-                <span>合并</span>
-              </button>
-              <GenerateDocumentButton selectedEventIds={selectedEventIds} />
-            </>
-          ) : (
-            <>
-              <button
-                onClick={toggleSelectionMode}
-                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
-              >
-                <CheckSquare size={16} className="text-gray-600" />
-              </button>
-              <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <Filter size={16} className="text-gray-600" />
-              </button>
-            </>
+
+        {/* Toast notification */}
+        <AnimatePresence>
+          {toast && (
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 50 }}
+              className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
+                toast.type === "success" ? "bg-green-500" : "bg-red-500"
+              } text-white`}
+            >
+              {toast.message}
+            </motion.div>
           )}
-        </div>
+        </AnimatePresence>
+
+        {/* Merge confirmation dialog */}
+        <MergeConfirmation
+          isOpen={showMergeConfirmation}
+          selectedCount={selectedEventIds.length}
+          onConfirm={handleMergeEvents}
+          onCancel={() => setShowMergeConfirmation(false)}
+          isLoading={isMerging}
+        />
       </div>
-
-      {/* Cards content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {loading ? (
-          <div className="flex justify-center items-center h-32">
-            <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
-          </div>
-        ) : error ? (
-          <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
-            {error}
-            <button onClick={fetchEvents} className="block mx-auto mt-2 text-[#007AFF] font-medium">
-              重试
-            </button>
-          </div>
-        ) : events.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-            <p>暂无事件卡片</p>
-          </div>
-        ) : (
-          <AnimatePresence>
-            {events.map((event, index) => (
-              <motion.div
-                key={event.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -100 }}
-                transition={{
-                  duration: 0.3,
-                  delay: index * 0.05,
-                  ease: [0.25, 0.1, 0.25, 1.0], // iOS-like easing
-                }}
-              >
-                <EventCard
-                  event={event}
-                  onDelete={handleDeleteEvent}
-                  onUpdate={handleUpdateEvent}
-                  onDeleteImage={handleDeleteImage}
-                  onAddImage={handleAddImage}
-                  onDeleteDocument={handleDeleteDocument}
-                  onDeleteMessage={handleDeleteMessage}
-                  onUploadSuccess={fetchEvents}
-                  selectionMode={selectionMode}
-                  isSelected={selectedEventIds.includes(event.id)}
-                  onToggleSelect={toggleEventSelection}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        )}
-      </div>
-
-      {/* Toast notification */}
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={`fixed bottom-6 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg ${
-              toast.type === "success" ? "bg-green-500" : "bg-red-500"
-            } text-white`}
-          >
-            {toast.message}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Merge confirmation dialog */}
-      <MergeConfirmation
-        isOpen={showMergeConfirmation}
-        selectedCount={selectedEventIds.length}
-        onConfirm={handleMergeEvents}
-        onCancel={() => setShowMergeConfirmation(false)}
-        isLoading={isMerging}
-      />
-    </div>
+    </DocumentProvider>
   )
 }
