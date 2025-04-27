@@ -5,7 +5,11 @@ import axios from "axios"
 import { motion } from "framer-motion"
 import { RefreshCw } from "lucide-react"
 
-export default function UpdateMessagesButton() {
+interface UpdateMessagesButtonProps {
+  onUpdate?: () => void
+}
+
+export default function UpdateMessagesButton({ onUpdate }: UpdateMessagesButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
 
@@ -17,6 +21,9 @@ export default function UpdateMessagesButton() {
       // Show success state briefly
       setTimeout(() => {
         setIsLoading(false)
+        if (onUpdate) {
+          onUpdate()
+        }
       }, 1000)
     } catch (error) {
       console.error("Error updating messages:", error)

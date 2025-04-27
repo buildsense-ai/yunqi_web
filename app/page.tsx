@@ -4,18 +4,25 @@ import { useEffect, useState, useRef } from "react"
 import axios from "axios"
 import { motion, AnimatePresence } from "framer-motion"
 import ChatMessage from "@/components/chat-message"
-import type { Message } from "@/types/message"
 import ClusteringButton from "@/components/clustering-button"
 import ViewCardsButton from "@/components/view-cards-button"
 import UpdateMessagesButton from "@/components/update-messages-button"
+import { useCache } from "@/contexts/cache-context"
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([])
+  const { messages, setMessages, isCacheStale, invalidateMessages } = useCache()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  const fetchMessages = async () => {
+  const fetchMessages = async (force = false) => {
+    // Skip fetching if cache is fresh and not forced
+    if (!force && !isCacheStale("messages")) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const response = await axios.get("http://43.139.19.144:8000/get_Messages")
@@ -33,9 +40,15 @@ export default function ChatPage() {
     fetchMessages()
 
     // Poll for new messages every 30 seconds
-    const intervalId = setInterval(fetchMessages, 30000)
+    pollingIntervalRef.current = setInterval(() => {
+      fetchMessages(true) // Force refresh on polling
+    }, 30000)
 
-    return () => clearInterval(intervalId)
+    return () => {
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+      }
+    }
   }, [])
 
   useEffect(() => {
@@ -43,10 +56,16 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
+  // Handle refresh triggered by update button
+  const handleRefresh = () => {
+    invalidateMessages()
+    fetchMessages(true)
+  }
+
   return (
-    <div className="flex flex-col h-screen bg-[#F2F2F7]">
-      {/* iOS-style header */}
-      <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+    <div className="flex flex-col h-screen w-screen fixed inset-0 bg-[#F2F2F7] overflow-hidden">
+      {/* iOS-style header - fixed position */}
+      <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between z-10">
         <div className="flex items-center">
           <button className="text-[#007AFF] text-sm font-medium">Back</button>
         </div>
@@ -55,15 +74,15 @@ export default function ChatPage() {
           <p className="text-xs text-gray-500">5 participants</p>
         </div>
         <div className="flex items-center space-x-3">
-          <UpdateMessagesButton />
-          <ClusteringButton />
+          <UpdateMessagesButton onUpdate={handleRefresh} />
+          <ClusteringButton onClusteringComplete={handleRefresh} />
           <ViewCardsButton />
           <button className="text-[#007AFF] text-sm font-medium">Info</button>
         </div>
       </div>
 
-      {/* Chat messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      {/* Chat messages - scrollable container */}
+      <div className="flex-1 overflow-y-auto overscroll-none -webkit-overflow-scrolling-touch p-4 space-y-4">
         {loading && messages.length === 0 ? (
           <div className="flex justify-center items-center h-full">
             <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
@@ -71,7 +90,7 @@ export default function ChatPage() {
         ) : error ? (
           <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
             {error}
-            <button onClick={fetchMessages} className="block mx-auto mt-2 text-[#007AFF] font-medium">
+            <button onClick={() => fetchMessages(true)} className="block mx-auto mt-2 text-[#007AFF] font-medium">
               Try Again
             </button>
           </div>

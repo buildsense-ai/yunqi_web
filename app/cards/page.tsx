@@ -8,11 +8,11 @@ import { ChevronLeft, Filter, CheckSquare, X, Layers } from "lucide-react"
 import EventCard from "@/components/event-card"
 import MergeConfirmation from "@/components/merge-confirmation"
 import GenerateDocumentButton from "@/components/generate-document-button"
-import type { Event } from "@/types/event"
 import { DocumentProvider } from "@/contexts/document-context"
+import { useCache } from "@/contexts/cache-context"
 
 export default function CardsPage() {
-  const [events, setEvents] = useState<Event[]>([])
+  const { events, setEvents, isCacheStale, invalidateEvents } = useCache()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null)
@@ -21,7 +21,13 @@ export default function CardsPage() {
   const [showMergeConfirmation, setShowMergeConfirmation] = useState(false)
   const [isMerging, setIsMerging] = useState(false)
 
-  const fetchEvents = async () => {
+  const fetchEvents = async (force = false) => {
+    // Skip fetching if cache is fresh and not forced
+    if (!force && !isCacheStale("events")) {
+      setLoading(false)
+      return
+    }
+
     try {
       setLoading(true)
       const response = await axios.get("/api/events")
@@ -55,7 +61,7 @@ export default function CardsPage() {
       // Check if deletion was successful
       if (response.data && response.data.message) {
         // 从列表中移除已删除的卡片
-        setEvents((prevEvents) => prevEvents.filter((event) => event.id !== eventId))
+        setEvents(events.filter((event) => event.id !== eventId))
         showToast("卡片已成功删除", "success")
       } else {
         throw new Error("Deletion response did not contain expected data")
@@ -73,8 +79,8 @@ export default function CardsPage() {
       const response = await axios.put(`/api/events/${eventId}`, data)
 
       // 更新列表中的卡片
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
+      setEvents(
+        events.map((event) => {
           if (event.id === eventId) {
             return {
               ...event,
@@ -99,8 +105,8 @@ export default function CardsPage() {
       await axios.delete(`/api/events/${eventId}/images/${messageId}`)
 
       // 更新列表中的卡片，移除已删除的图片
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
+      setEvents(
+        events.map((event) => {
           if (event.id === eventId && event.candidate_images) {
             return {
               ...event,
@@ -125,8 +131,8 @@ export default function CardsPage() {
       const response = await axios.post(`/api/events/${eventId}/images`, imageData)
 
       // 更新列表中的卡片，添加新图片
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
+      setEvents(
+        events.map((event) => {
           if (event.id === eventId) {
             return {
               ...event,
@@ -153,8 +159,8 @@ export default function CardsPage() {
       await axios.delete(`/api/events/${eventId}/documents/${messageId}`)
 
       // Update the events list, remove the deleted document
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
+      setEvents(
+        events.map((event) => {
           if (event.id === eventId && event.documents) {
             return {
               ...event,
@@ -179,8 +185,8 @@ export default function CardsPage() {
       await axios.delete(`/api/events/${eventId}/messages/${messageId}`)
 
       // Update the events list, remove the deleted message
-      setEvents((prevEvents) =>
-        prevEvents.map((event) => {
+      setEvents(
+        events.map((event) => {
           if (event.id === eventId) {
             return {
               ...event,
@@ -238,7 +244,8 @@ export default function CardsPage() {
       const response = await axios.post("/api/merge-events", selectedEventIds)
 
       // 刷新卡片列表
-      await fetchEvents()
+      invalidateEvents() // Invalidate events cache
+      await fetchEvents(true) // Force refresh
 
       // 退出选择模式
       setSelectionMode(false)
@@ -256,9 +263,9 @@ export default function CardsPage() {
 
   return (
     <DocumentProvider>
-      <div className="flex flex-col h-screen bg-[#F2F2F7]">
+      <div className="flex flex-col h-screen w-screen fixed inset-0 bg-[#F2F2F7] overflow-hidden">
         {/* iOS-style header */}
-        <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between sticky top-0 z-10">
+        <div className="bg-white py-3 px-4 border-b border-gray-200 flex items-center justify-between z-10">
           <div className="flex items-center">
             {selectionMode ? (
               <button onClick={toggleSelectionMode} className="text-[#007AFF] text-sm font-medium flex items-center">
@@ -309,7 +316,7 @@ export default function CardsPage() {
         </div>
 
         {/* Cards content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto overscroll-none -webkit-overflow-scrolling-touch p-4">
           {loading ? (
             <div className="flex justify-center items-center h-32">
               <div className="w-8 h-8 rounded-full border-2 border-[#007AFF] border-t-transparent animate-spin"></div>
@@ -317,7 +324,7 @@ export default function CardsPage() {
           ) : error ? (
             <div className="bg-red-50 p-4 rounded-xl text-center text-red-500">
               {error}
-              <button onClick={fetchEvents} className="block mx-auto mt-2 text-[#007AFF] font-medium">
+              <button onClick={() => fetchEvents(true)} className="block mx-auto mt-2 text-[#007AFF] font-medium">
                 重试
               </button>
             </div>
@@ -347,7 +354,7 @@ export default function CardsPage() {
                     onAddImage={handleAddImage}
                     onDeleteDocument={handleDeleteDocument}
                     onDeleteMessage={handleDeleteMessage}
-                    onUploadSuccess={fetchEvents}
+                    onUploadSuccess={() => fetchEvents(true)}
                     selectionMode={selectionMode}
                     isSelected={selectedEventIds.includes(event.id)}
                     onToggleSelect={toggleEventSelection}

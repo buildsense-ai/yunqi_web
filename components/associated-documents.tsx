@@ -3,27 +3,34 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import { FileText, ExternalLink } from "lucide-react"
-import type { AutoDocument } from "@/types/auto-document"
 import { useDocuments } from "@/contexts/document-context"
+import { useCache } from "@/contexts/cache-context"
 
 interface AssociatedDocumentsProps {
   eventId: number
 }
 
 export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProps) {
-  const [documents, setDocuments] = useState<AutoDocument[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { documentRefreshCounter } = useDocuments()
+  const { documents, setDocuments, isCacheStale } = useCache()
+
+  // Filter documents for this event
+  const eventDocuments = documents.filter((doc) => doc.event_id === eventId)
 
   useEffect(() => {
     const fetchDocuments = async () => {
+      // Skip fetching if cache is fresh
+      if (!isCacheStale("documents")) {
+        setLoading(false)
+        return
+      }
+
       try {
         setLoading(true)
         const response = await axios.get("/api/documents")
-        // Filter documents for this event
-        const eventDocuments = response.data.filter((doc: AutoDocument) => doc.event_id === eventId)
-        setDocuments(eventDocuments)
+        setDocuments(response.data)
         setError(null)
       } catch (err) {
         console.error("Error fetching documents:", err)
@@ -34,7 +41,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     }
 
     fetchDocuments()
-  }, [eventId, documentRefreshCounter])
+  }, [eventId, documentRefreshCounter, isCacheStale, setDocuments])
 
   // Extract filename from URL
   const getFileName = (url: string): string => {
@@ -54,7 +61,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     return <div className="mt-3 text-xs text-red-500 py-2">{error}</div>
   }
 
-  if (documents.length === 0) {
+  if (eventDocuments.length === 0) {
     return null
   }
 
@@ -62,7 +69,7 @@ export default function AssociatedDocuments({ eventId }: AssociatedDocumentsProp
     <div className="mt-3 space-y-2">
       <h4 className="text-sm font-medium text-gray-700">自动生成文档</h4>
       <div className="space-y-2">
-        {documents.map((doc) => (
+        {eventDocuments.map((doc) => (
           <a
             key={doc.id}
             href={doc.doc_url}

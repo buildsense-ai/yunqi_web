@@ -5,7 +5,11 @@ import axios from "axios"
 import { motion } from "framer-motion"
 import { Sparkles } from "lucide-react"
 
-export default function ClusteringButton() {
+interface ClusteringButtonProps {
+  onClusteringComplete?: () => void
+}
+
+export default function ClusteringButton({ onClusteringComplete }: ClusteringButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
 
@@ -17,6 +21,9 @@ export default function ClusteringButton() {
       // Show success state briefly
       setTimeout(() => {
         setIsLoading(false)
+        if (onClusteringComplete) {
+          onClusteringComplete()
+        }
       }, 1000)
     } catch (error) {
       console.error("Error clustering messages:", error)
