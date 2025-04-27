@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { X, Search, Check } from "lucide-react"
 import Image from "next/image"
-import axios from "axios"
+import axiosClient from "@/utils/axios-client"
 import type { Message } from "@/types/message"
 
 interface ImageSelectionDialogProps {
@@ -37,7 +37,8 @@ export default function ImageSelectionDialog({ isOpen, onClose, onSelectImage, e
   const fetchMessages = async () => {
     try {
       setLoading(true)
-      const response = await axios.get("http://43.139.19.144:8000/get_Messages")
+      // 使用 axiosClient 来自动添加 Authorization 头部
+      const response = await axiosClient.get("http://43.139.19.144:8000/get_Messages")
       // 只过滤出包含图片的消息
       const messagesWithImages = response.data.filter((msg: Message) => msg.image_url)
       setMessages(messagesWithImages)
