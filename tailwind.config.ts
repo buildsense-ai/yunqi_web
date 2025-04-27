@@ -78,9 +78,25 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
       },
+      // 添加自定义工具类
+      utilities: {
+        ".overflow-wrap-anywhere": {
+          "overflow-wrap": "anywhere",
+        },
+      },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    require("tailwindcss-animate"),
+    ({ addUtilities }) => {
+      const newUtilities = {
+        ".overflow-wrap-anywhere": {
+          "overflow-wrap": "anywhere",
+        },
+      }
+      addUtilities(newUtilities)
+    },
+  ],
 }
 
 export default config

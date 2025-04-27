@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { getToken } from "next-auth/jwt"
 
 export async function POST(request: Request, { params }: { params: { eventId: string } }) {
   try {
@@ -11,9 +12,13 @@ export async function POST(request: Request, { params }: { params: { eventId: st
     const formData = new FormData()
     formData.append("file", new Blob([binaryData]), "document.docx")
 
+    // Get the token
+    const token = await getToken({ req: request })
+
     // Send the request to the backend
     const response = await fetch(`http://43.139.19.144:8000/upload_doc?event_id=${eventId}`, {
       method: "POST",
+      headers: token?.accessToken ? { Authorization: `Bearer ${token.accessToken}` } : undefined,
       body: formData,
     })
 

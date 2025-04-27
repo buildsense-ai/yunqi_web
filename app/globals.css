@@ -18,6 +18,19 @@ body {
   overscroll-behavior-y: contain;
 }
 
+/* 添加文本换行样式 */
+.break-words {
+  word-break: break-word;
+}
+
+.whitespace-pre-wrap {
+  white-space: pre-wrap;
+}
+
+.overflow-wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -25,6 +38,11 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* 添加文本换行工具类 */
+  .text-wrap-anywhere {
+    text-wrap: anywhere;
   }
 }
 

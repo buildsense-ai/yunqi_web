@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { addAuthHeader } from "@/utils/api-utils"
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
@@ -6,9 +7,9 @@ export async function GET(request: Request, { params }: { params: { eventId: str
 
     const response = await fetch(`http://43.139.19.144:8000/generate_doc/${eventId}`, {
       method: "GET",
-      headers: {
+      headers: addAuthHeader({
         "Content-Type": "application/json",
-      },
+      }),
     })
 
     if (!response.ok) {

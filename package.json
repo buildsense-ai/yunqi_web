@@ -59,11 +59,14 @@
     "vaul": "^0.9.6",
     "zod": "^3.24.1",
     "@emotion/is-prop-valid": "latest",
+    "@auth/core": "latest",
+    "nodemailer": "latest",
     "@heroicons/react": "latest",
     "framer-motion": "latest",
     "docx": "latest",
     "file-saver": "latest",
-    "axios": "latest"
+    "axios": "latest",
+    "next-auth": "latest"
   },
   "devDependencies": {
     "@types/node": "^22",

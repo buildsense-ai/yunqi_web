@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { CacheProvider } from "@/contexts/cache-context"
+import { AuthProvider } from "@/contexts/auth-context"
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -22,7 +23,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} overflow-hidden`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <CacheProvider>{children}</CacheProvider>
+          <CacheProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </CacheProvider>
         </ThemeProvider>
       </body>
     </html>

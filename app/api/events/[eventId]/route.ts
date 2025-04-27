@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { addAuthHeader } from "@/utils/api-utils"
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
@@ -10,9 +11,9 @@ export async function GET(request: Request, { params }: { params: { eventId: str
     if (action === "delete") {
       const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {
         method: "GET", // Using GET for deletion as per API requirements
-        headers: {
+        headers: addAuthHeader({
           "Content-Type": "application/json",
-        },
+        }),
       })
 
       if (!response.ok) {
@@ -26,9 +27,9 @@ export async function GET(request: Request, { params }: { params: { eventId: str
     // If no action specified, just get the event
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {
       method: "GET",
-      headers: {
+      headers: addAuthHeader({
         "Content-Type": "application/json",
-      },
+      }),
     })
 
     if (!response.ok) {
@@ -51,9 +52,9 @@ export async function PUT(request: Request, { params }: { params: { eventId: str
 
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}`, {
       method: "PUT",
-      headers: {
+      headers: addAuthHeader({
         "Content-Type": "application/json",
-      },
+      }),
       body: JSON.stringify(body),
     })
 

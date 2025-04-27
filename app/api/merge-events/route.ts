@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { addAuthHeader } from "@/utils/api-utils"
 
 export async function POST(request: Request) {
   try {
@@ -12,9 +13,9 @@ export async function POST(request: Request) {
 
     const response = await fetch("http://43.139.19.144:8000/merge-events", {
       method: "POST",
-      headers: {
+      headers: addAuthHeader({
         "Content-Type": "application/json",
-      },
+      }),
       // Send the array directly
       body: JSON.stringify(eventIds),
     })

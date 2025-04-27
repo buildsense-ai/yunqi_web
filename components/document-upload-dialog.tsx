@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useRef } from "react"
 import { motion } from "framer-motion"
 import { X, Upload, File } from "lucide-react"
-import axios from "axios"
+import axiosClient from "@/utils/axios-client"
 
 interface DocumentUploadDialogProps {
   isOpen: boolean
@@ -46,7 +46,7 @@ export default function DocumentUploadDialog({ isOpen, onClose, eventId, onSucce
       const fileBuffer = await selectedFile.arrayBuffer()
 
       // Send the binary data to the API
-      await axios.post(`/api/events/${eventId}/documents`, fileBuffer, {
+      await axiosClient.post(`/api/events/${eventId}/documents`, fileBuffer, {
         headers: {
           "Content-Type": "application/octet-stream",
         },

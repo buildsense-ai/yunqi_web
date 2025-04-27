@@ -69,7 +69,10 @@ export default function ChatMessage({ message, isCurrentUser }: ChatMessageProps
             ${isCurrentUser ? "bg-[#007AFF] text-white rounded-tr-sm" : "bg-white text-black rounded-tl-sm"}
           `}
         >
-          {message.message_content?.text || ""}
+          {/* 修复文本换行问题 */}
+          <div className="break-words whitespace-pre-wrap overflow-wrap-anywhere">
+            {message.message_content?.text || ""}
+          </div>
 
           {isLongPressed && (
             <motion.div

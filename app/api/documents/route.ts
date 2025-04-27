@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server"
+import { addAuthHeader } from "@/utils/api-utils"
 
 export async function GET() {
   try {
     const response = await fetch("http://43.139.19.144:8000/get_AllDocs", {
       method: "GET",
-      headers: {
+      headers: addAuthHeader({
         "Content-Type": "application/json",
-      },
+      }),
       cache: "no-store",
     })
 

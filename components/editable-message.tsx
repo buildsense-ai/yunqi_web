@@ -28,7 +28,9 @@ export default function EditableMessage({ message, eventId, onDelete }: Editable
   return (
     <div className="flex items-start justify-between p-3 border border-gray-200 rounded-md mb-2 group">
       <div className="flex-1">
-        <p className="text-sm text-gray-700">{message.content}</p>
+        <p className="text-sm text-gray-700 break-words whitespace-pre-wrap overflow-wrap-anywhere">
+          {message.content}
+        </p>
         <p className="text-xs text-gray-500 mt-1">{format(new Date(message.timestamp), "HH:mm")}</p>
       </div>
 
