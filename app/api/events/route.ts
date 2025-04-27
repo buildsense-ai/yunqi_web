@@ -1,13 +1,19 @@
 import { NextResponse } from "next/server"
 import { addAuthHeader } from "@/utils/api-utils"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // 从请求头中获取token
+    const token = request.headers.get("authorization")?.split(" ")[1]
+
+    const headers: HeadersInit = addAuthHeader()
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`
+    }
+
     const response = await fetch("http://43.139.19.144:8000/events-db", {
       cache: "no-store",
-      headers: addAuthHeader({
-        "Content-Type": "application/json",
-      }),
+      headers,
     })
 
     if (!response.ok) {

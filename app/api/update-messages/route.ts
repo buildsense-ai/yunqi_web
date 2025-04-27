@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server"
-import { addAuthHeader } from "@/utils/api-utils"
+import { getHeadersWithAuth } from "@/utils/server-utils"
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const headers = getHeadersWithAuth(request)
+
     const response = await fetch("http://43.139.19.144:8000/get_messages_with_image", {
       method: "GET",
-      headers: addAuthHeader({
-        "Content-Type": "application/json",
-      }),
+      headers,
     })
 
     if (!response.ok) {

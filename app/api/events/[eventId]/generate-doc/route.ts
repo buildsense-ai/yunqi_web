@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
-import { addAuthHeader } from "@/utils/api-utils"
+import { getHeadersWithAuth } from "@/utils/server-utils"
 
 export async function GET(request: Request, { params }: { params: { eventId: string } }) {
   try {
     const { eventId } = params
 
+    const headers = getHeadersWithAuth(request)
+
     const response = await fetch(`http://43.139.19.144:8000/generate_doc/${eventId}`, {
       method: "GET",
-      headers: addAuthHeader({
-        "Content-Type": "application/json",
-      }),
+      headers,
     })
 
     if (!response.ok) {

@@ -1,14 +1,16 @@
 import { NextResponse } from "next/server"
-import { addAuthHeader } from "@/utils/api-utils"
+import { getHeadersWithAuth } from "@/utils/server-utils"
 
 export async function DELETE(request: Request, { params }: { params: { eventId: string; messageId: string } }) {
   try {
     const { eventId, messageId } = params
 
+    const headers = getHeadersWithAuth(request)
+
     // Call the backend API to delete the document
     const response = await fetch(`http://43.139.19.144:8000/delete_doc?event_id=${eventId}&message_id=${messageId}`, {
       method: "DELETE",
-      headers: addAuthHeader(),
+      headers,
     })
 
     if (!response.ok) {

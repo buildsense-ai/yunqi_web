@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server"
-import { addAuthHeader } from "@/utils/api-utils"
+import { getHeadersWithAuth } from "@/utils/server-utils"
 
 export async function DELETE(request: Request, { params }: { params: { eventId: string; messageId: string } }) {
   try {
     const { eventId, messageId } = params
 
+    const headers = getHeadersWithAuth(request)
+
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}/images/${messageId}`, {
       method: "DELETE",
-      headers: addAuthHeader({
-        "Content-Type": "application/json",
-      }),
+      headers,
     })
 
     if (!response.ok) {

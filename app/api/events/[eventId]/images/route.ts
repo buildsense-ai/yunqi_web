@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server"
-import { addAuthHeader } from "@/utils/api-utils"
+import { getHeadersWithAuth } from "@/utils/server-utils"
 
 export async function POST(request: Request, { params }: { params: { eventId: string } }) {
   try {
     const { eventId } = params
     const body = await request.json()
 
+    const headers = getHeadersWithAuth(request)
+
     const response = await fetch(`http://43.139.19.144:8000/events-db/${eventId}/images`, {
       method: "POST",
-      headers: addAuthHeader({
-        "Content-Type": "application/json",
-      }),
+      headers,
       body: JSON.stringify(body),
     })
 
