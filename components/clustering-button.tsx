@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import axios from "axios"
-import { motion } from "framer-motion"
-import { Sparkles } from "lucide-react"
+import { useState, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Sparkles, CheckCircle, XCircle } from "lucide-react"
+import axiosClient from "@/utils/axios-client"
 
 interface ClusteringButtonProps {
   onClusteringComplete?: () => void
@@ -12,22 +12,90 @@ interface ClusteringButtonProps {
 export default function ClusteringButton({ onClusteringComplete }: ClusteringButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
+  const [status, setStatus] = useState<"idle" | "success" | "error">("idle")
+
+  // 重置状态的定时器
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null
+
+    if (status !== "idle") {
+      timer = setTimeout(() => {
+        setStatus("idle")
+      }, 3000) // 3秒后重置状态
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer)
+    }
+  }, [status])
 
   const handleCluster = async () => {
     try {
       setIsLoading(true)
-      // Call the clustering API endpoint with GET method
-      await axios.get("/api/generate-events")
-      // Show success state briefly
-      setTimeout(() => {
-        setIsLoading(false)
+      setStatus("idle")
+
+      // 使用axiosClient来自动添加Authorization头部
+      const response = await axiosClient.get("/api/generate-events")
+
+      // 检查响应状态
+      if (response.status === 200) {
+        setStatus("success")
+
+        // 调用完成回调
         if (onClusteringComplete) {
           onClusteringComplete()
         }
-      }, 1000)
+      } else {
+        setStatus("error")
+      }
     } catch (error) {
       console.error("Error clustering messages:", error)
+      setStatus("error")
+    } finally {
       setIsLoading(false)
+    }
+  }
+
+  // 获取按钮颜色
+  const getButtonColor = () => {
+    if (isLoading) return "bg-[#007AFF]"
+    switch (status) {
+      case "success":
+        return "bg-green-500"
+      case "error":
+        return "bg-red-500"
+      default:
+        return "bg-[#007AFF]"
+    }
+  }
+
+  // 获取按钮图标
+  const getButtonIcon = () => {
+    if (isLoading) {
+      return <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+    }
+
+    switch (status) {
+      case "success":
+        return <CheckCircle size={16} />
+      case "error":
+        return <XCircle size={16} />
+      default:
+        return <Sparkles size={16} />
+    }
+  }
+
+  // 获取提示文本
+  const getTooltipText = () => {
+    if (isLoading) return "正在聚类..."
+
+    switch (status) {
+      case "success":
+        return "聚类成功"
+      case "error":
+        return "聚类失败"
+      default:
+        return "自动聚类"
     }
   }
 
@@ -37,23 +105,40 @@ export default function ClusteringButton({ onClusteringComplete }: ClusteringBut
         onClick={handleCluster}
         disabled={isLoading}
         whileTap={{ scale: 0.95 }}
-        className="w-8 h-8 rounded-full bg-[#007AFF] flex items-center justify-center text-white"
+        className={`w-8 h-8 rounded-full flex items-center justify-center text-white ${getButtonColor()}`}
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         aria-label="Auto-cluster messages"
       >
-        {isLoading ? (
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-        ) : (
-          <Sparkles size={16} />
-        )}
+        {getButtonIcon()}
       </motion.button>
 
-      {showTooltip && (
-        <div className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs py-1 px-2 rounded whitespace-nowrap">
-          Auto-cluster messages
-        </div>
-      )}
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 5 }}
+            className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-50"
+          >
+            {getTooltipText()}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 状态反馈 - 在按钮旁边显示 */}
+      <AnimatePresence>
+        {status !== "idle" && !showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            className="absolute -bottom-10 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-40"
+          >
+            {status === "success" ? "聚类成功" : "聚类失败"}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
