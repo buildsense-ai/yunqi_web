@@ -1,23 +1,29 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { LockIcon, UserIcon, EyeIcon, EyeOffIcon } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
-import axiosClient from "@/utils/axios-client"
+import axios from "axios"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const { isAuthenticated, login } = useAuth()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loginSuccess, setLoginSuccess] = useState(false)
+
+  // 如果用户已登录，重定向到首页
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/")
+    }
+  }, [isAuthenticated, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,7 +38,7 @@ export default function LoginPage() {
       setError(null)
 
       // 这里不使用axiosClient，因为登录时还没有token
-      const response = await axiosClient.post("http://43.139.19.144:8000/token", {
+      const response = await axios.post("http://43.139.19.144:8000/token", {
         username,
         password,
       })
