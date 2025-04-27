@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { ChevronLeft, Filter, CheckSquare, X, Layers } from "lucide-react"
+import { ChevronLeft, Filter, CheckSquare, X, Layers, Search } from "lucide-react"
 import EventCard from "@/components/event-card"
 import MergeConfirmation from "@/components/merge-confirmation"
 import GenerateDocumentButton from "@/components/generate-document-button"
@@ -22,6 +22,8 @@ export default function CardsPage() {
   const [selectedEventIds, setSelectedEventIds] = useState<number[]>([])
   const [showMergeConfirmation, setShowMergeConfirmation] = useState(false)
   const [isMerging, setIsMerging] = useState(false)
+  const [showSearch, setShowSearch] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
 
   const fetchEvents = async (force = false) => {
     // Skip fetching if cache is fresh and not forced
@@ -263,6 +265,17 @@ export default function CardsPage() {
     }
   }
 
+  // 过滤卡片
+  const filteredEvents = events.filter((event) => {
+    if (!searchTerm) return true
+
+    const summary = event.summary?.toLowerCase() || ""
+    const category = event.category?.toLowerCase() || ""
+    const search = searchTerm.toLowerCase()
+
+    return summary.includes(search) || category.includes(search)
+  })
+
   return (
     <AuthGuard>
       <DocumentProvider>
@@ -310,14 +323,60 @@ export default function CardsPage() {
                   >
                     <CheckSquare size={16} className="text-gray-600" />
                   </button>
-                  <button className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                    <Filter size={16} className="text-gray-600" />
+                  <button
+                    onClick={() => setShowSearch(!showSearch)}
+                    className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center"
+                  >
+                    <Filter size={16} className={`${showSearch ? "text-[#007AFF]" : "text-gray-600"}`} />
                   </button>
                   <LoginButton />
                 </>
               )}
             </div>
           </div>
+
+          {/* 搜索栏 */}
+          <AnimatePresence>
+            {showSearch && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="bg-white border-b border-gray-200 overflow-hidden"
+              >
+                <div className="p-3 flex items-center">
+                  <div className="relative flex-1">
+                    <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="搜索卡片..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-9 pr-3 py-2 bg-gray-100 rounded-full focus:outline-none focus:ring-2 focus:ring-[#007AFF]"
+                      autoFocus
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowSearch(false)
+                      setSearchTerm("")
+                    }}
+                    className="ml-3 text-[#007AFF] text-sm font-medium"
+                  >
+                    取消
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Cards content */}
           <div className="flex-1 overflow-y-auto overscroll-none -webkit-overflow-scrolling-touch p-4">
@@ -334,11 +393,20 @@ export default function CardsPage() {
               </div>
             ) : events.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                <p>暂无事件卡片</p>
+                {searchTerm ? (
+                  <>
+                    <p>没有找到匹配的卡片</p>
+                    <button onClick={() => setSearchTerm("")} className="mt-2 text-[#007AFF] font-medium">
+                      清除搜索
+                    </button>
+                  </>
+                ) : (
+                  <p>暂无事件卡片</p>
+                )}
               </div>
             ) : (
               <AnimatePresence>
-                {events.map((event, index) => (
+                {filteredEvents.map((event, index) => (
                   <motion.div
                     key={event.id}
                     initial={{ opacity: 0, y: 20 }}
