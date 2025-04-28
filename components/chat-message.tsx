@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { format } from "date-fns"
+import Image from "next/image"
 import { Avatar } from "@/components/ui/avatar"
 import { AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import type { Message } from "@/types/message"
@@ -14,6 +15,8 @@ interface ChatMessageProps {
 
 export default function ChatMessage({ message, isCurrentUser }: ChatMessageProps) {
   const [isLongPressed, setIsLongPressed] = useState(false)
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
 
   const formattedTime = format(new Date(message.create_time), "h:mm a")
 
@@ -43,6 +46,9 @@ export default function ChatMessage({ message, isCurrentUser }: ChatMessageProps
     setTimeout(() => setIsLongPressed(false), 2000)
   }
 
+  // 检查是否为图片消息
+  const isImageMessage = message.msg_type === "image" && message.image_url
+
   return (
     <div className={`flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-4 relative`}>
       {!isCurrentUser && (
@@ -69,10 +75,43 @@ export default function ChatMessage({ message, isCurrentUser }: ChatMessageProps
             ${isCurrentUser ? "bg-[#007AFF] text-white rounded-tr-sm" : "bg-white text-black rounded-tl-sm"}
           `}
         >
-          {/* 修复文本换行问题 */}
-          <div className="break-words whitespace-pre-wrap overflow-wrap-anywhere">
-            {message.message_content?.text || ""}
-          </div>
+          {/* 图片消息 */}
+          {isImageMessage ? (
+            <div className="relative">
+              <div
+                className={`relative rounded-lg overflow-hidden ${imageLoaded ? "" : "bg-gray-100"}`}
+                style={{ minHeight: 150, minWidth: 150 }}
+              >
+                {!imageError ? (
+                  <Image
+                    src={message.image_url || "/placeholder.svg"}
+                    alt="Image message"
+                    width={300}
+                    height={200}
+                    className="object-contain rounded-lg"
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-[150px] w-full bg-gray-100 text-gray-500 text-sm">
+                    图片加载失败
+                  </div>
+                )}
+              </div>
+
+              {/* 如果有文本内容，也显示出来 */}
+              {message.message_content?.text && (
+                <div className="mt-2 break-words whitespace-pre-wrap overflow-wrap-anywhere">
+                  {message.message_content.text}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* 文本消息 */
+            <div className="break-words whitespace-pre-wrap overflow-wrap-anywhere">
+              {message.message_content?.text || ""}
+            </div>
+          )}
 
           {isLongPressed && (
             <motion.div

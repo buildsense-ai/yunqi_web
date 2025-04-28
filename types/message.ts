@@ -4,7 +4,8 @@ export interface Message {
   create_time: number
   sender_id: string
   message_content: {
-    text: string
+    text?: string
+    image_key?: string
   }
   image_url: string | null
   status: string
