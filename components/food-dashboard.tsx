@@ -2,12 +2,24 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import FoodCard from "@/components/food-card"
-import Header from "@/components/header"
-import type { FoodItem } from "@/types"
-import type { MealData } from "@/components/meal-form"
+import FoodCard from "./food-card"
+import Header from "./header"
 
-export default function FoodPage() {
+// 食物数据类型
+interface FoodItem {
+  id: string
+  name: string
+  category: string
+  eaten: boolean
+  image: string
+  mealData?: {
+    date: string
+    weather: string
+    location: string
+  }
+}
+
+export default function FoodDashboard() {
   // 初始食物数据
   const [foods, setFoods] = useState<FoodItem[]>([
     {
@@ -62,7 +74,7 @@ export default function FoodPage() {
   ])
 
   // 切换食物的吃了/没吃状态
-  const toggleEaten = (id: string, mealData?: MealData) => {
+  const toggleEaten = (id: string, mealData?: { date: string; weather: string; location: string }) => {
     setFoods(
       foods.map((food) => {
         if (food.id === id) {
@@ -87,7 +99,7 @@ export default function FoodPage() {
       <Header eatenCount={eatenCount} notEatenCount={notEatenCount} />
 
       <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-8"
+        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}

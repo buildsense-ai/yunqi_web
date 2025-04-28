@@ -2,35 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 添加移动端滚动修复 */
-html,
-body {
-  position: fixed;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-}
-
-/* 确保滚动容器正确工作 */
-.overflow-y-auto {
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
-
-/* 添加文本换行样式 */
-.break-words {
-  word-break: break-word;
-}
-
-.whitespace-pre-wrap {
-  white-space: pre-wrap;
-}
-
-.overflow-wrap-anywhere {
-  overflow-wrap: anywhere;
-}
-
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
@@ -38,11 +9,6 @@ body {
 @layer utilities {
   .text-balance {
     text-wrap: balance;
-  }
-
-  /* 添加文本换行工具类 */
-  .text-wrap-anywhere {
-    text-wrap: anywhere;
   }
 }
 
