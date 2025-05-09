@@ -289,7 +289,7 @@ export default function ConstructionChat() {
   }
 
   return (
-    <div className="flex flex-col h-[600px] max-w-md mx-auto bg-gray-100 rounded-xl overflow-hidden shadow-lg">
+    <div className="flex flex-col h-[800px] max-w-md mx-auto bg-gray-100 rounded-xl overflow-hidden shadow-lg">
       {/* Header */}
       <div className="bg-[#2e3238] text-white p-3 flex items-center">
         <Button variant="ghost" size="icon" className="text-white">
