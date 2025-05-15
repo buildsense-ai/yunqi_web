@@ -215,6 +215,40 @@ const getKeyPointIcon = (index: number) => {
 export default function SlideContent({ slide }: SlideContentProps) {
   // 根据幻灯片类型渲染不同的内容
   switch (slide.type) {
+    case "flow-chart":
+      return (
+        <motion.div
+          className="flex h-full w-full flex-col p-6"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          <motion.div
+            className="absolute top-0 left-0 w-full h-1 bg-primary-500"
+            initial={{ scaleX: 0, originX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
+          />
+          <motion.h2
+            className="mb-2 border-b border-secondary-200 pb-2 text-2xl font-bold text-primary-800 md:text-3xl"
+            variants={itemVariants}
+          >
+            {slide.title}
+          </motion.h2>
+
+          {slide.description && (
+            <motion.p className="text-xs text-secondary-700 mb-2" variants={itemVariants}>
+              {slide.description}
+            </motion.p>
+          )}
+
+          <motion.div className="flex-1 overflow-y-auto custom-scrollbar" variants={itemVariants}>
+            {slide.flowSteps && <FlowChart steps={slide.flowSteps} />}
+          </motion.div>
+        </motion.div>
+      )
+
+    // 其他幻灯片类型保持不变...
     case "case-comparison":
       return (
         <motion.div
@@ -356,39 +390,6 @@ export default function SlideContent({ slide }: SlideContentProps) {
         </motion.div>
       )
 
-    case "flow-chart":
-      return (
-        <motion.div
-          className="flex h-full w-full flex-col p-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <motion.div
-            className="absolute top-0 left-0 w-full h-1 bg-primary-500"
-            initial={{ scaleX: 0, originX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
-          />
-          <motion.h2
-            className="mb-4 border-b border-secondary-200 pb-3 text-2xl font-bold text-primary-800 md:text-3xl"
-            variants={itemVariants}
-          >
-            {slide.title}
-          </motion.h2>
-
-          {slide.description && (
-            <motion.p className="text-sm text-secondary-700 mb-6" variants={itemVariants}>
-              {slide.description}
-            </motion.p>
-          )}
-
-          <motion.div className="flex-1 overflow-y-auto custom-scrollbar" variants={itemVariants}>
-            {slide.flowSteps && <FlowChart steps={slide.flowSteps} />}
-          </motion.div>
-        </motion.div>
-      )
-
     case "comparison":
       return (
         <motion.div
@@ -404,14 +405,14 @@ export default function SlideContent({ slide }: SlideContentProps) {
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
           />
           <motion.h2
-            className="mb-4 border-b border-secondary-200 pb-3 text-2xl font-bold text-primary-800 md:text-3xl"
+            className="mb-5 border-b border-secondary-200 pb-3 text-3xl font-bold text-primary-800 md:text-4xl"
             variants={itemVariants}
           >
             {slide.title}
           </motion.h2>
 
           {slide.description && (
-            <motion.p className="text-sm text-secondary-700 mb-6" variants={itemVariants}>
+            <motion.p className="text-base text-secondary-700 mb-5" variants={itemVariants}>
               {slide.description}
             </motion.p>
           )}
@@ -425,14 +426,14 @@ export default function SlideContent({ slide }: SlideContentProps) {
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 <div className="bg-secondary-700 p-4">
-                  <h3 className="text-lg font-semibold text-white">{slide.comparisonData.traditional.title}</h3>
+                  <h3 className="text-xl font-semibold text-white">{slide.comparisonData.traditional.title}</h3>
                 </div>
-                <div className="p-4">
-                  <ul className="space-y-3">
+                <div className="p-5">
+                  <ul className="space-y-4">
                     {slide.comparisonData.traditional.points.map((point, index) => (
                       <motion.li key={index} className="flex items-start" variants={itemVariants} custom={index}>
-                        <div className="mr-2 mt-1 h-3 w-3 rounded-full bg-secondary-500 flex-shrink-0"></div>
-                        <p className="text-sm text-secondary-700">{point}</p>
+                        <div className="mr-3 mt-1.5 h-3 w-3 rounded-full bg-secondary-500 flex-shrink-0"></div>
+                        <p className="text-base text-secondary-700">{point}</p>
                       </motion.li>
                     ))}
                   </ul>
@@ -446,14 +447,14 @@ export default function SlideContent({ slide }: SlideContentProps) {
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
               >
                 <div className="bg-primary-600 p-4">
-                  <h3 className="text-lg font-semibold text-white">{slide.comparisonData.aiAssisted.title}</h3>
+                  <h3 className="text-xl font-semibold text-white">{slide.comparisonData.aiAssisted.title}</h3>
                 </div>
-                <div className="p-4">
-                  <ul className="space-y-3">
+                <div className="p-5">
+                  <ul className="space-y-4">
                     {slide.comparisonData.aiAssisted.points.map((point, index) => (
                       <motion.li key={index} className="flex items-start" variants={itemVariants} custom={index}>
-                        <div className="mr-2 mt-1 h-3 w-3 rounded-full bg-accent-500 flex-shrink-0"></div>
-                        <p className="text-sm text-secondary-700">{point}</p>
+                        <div className="mr-3 mt-1.5 h-3 w-3 rounded-full bg-accent-500 flex-shrink-0"></div>
+                        <p className="text-base text-secondary-700">{point}</p>
                       </motion.li>
                     ))}
                   </ul>
@@ -671,35 +672,35 @@ export default function SlideContent({ slide }: SlideContentProps) {
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
           />
           <motion.h2
-            className="mb-4 border-b border-secondary-200 pb-3 text-2xl font-bold text-primary-800 md:text-3xl"
+            className="mb-6 border-b border-secondary-200 pb-3 text-3xl font-bold text-primary-800 md:text-4xl"
             variants={itemVariants}
           >
             {slide.title}
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
             {/* 左侧：定义和关键点 */}
             <motion.div className="flex flex-col" variants={itemVariants}>
               {slide.definition && (
-                <div className="mb-4 p-4 bg-primary-50 rounded-xl border-l-4 border-primary-500 shadow-md">
-                  <p className="text-base text-secondary-700 leading-relaxed">{slide.definition}</p>
+                <div className="mb-6 p-5 bg-primary-50 rounded-xl border-l-4 border-primary-500 shadow-md">
+                  <p className="text-lg text-secondary-700 leading-relaxed">{slide.definition}</p>
                 </div>
               )}
 
               {slide.keyPoints && (
-                <div className="mt-2">
-                  <h3 className="text-lg font-semibold text-primary-700 mb-2">关键特点：</h3>
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="mt-4">
+                  <h3 className="text-xl font-semibold text-primary-700 mb-4">关键特点：</h3>
+                  <div className="grid grid-cols-2 gap-4">
                     {slide.keyPoints.map((point, index) => (
                       <motion.div
                         key={index}
-                        className="flex items-center bg-white p-2 rounded-lg shadow-sm border border-secondary-100 hover:shadow-md transition-shadow duration-300"
+                        className="flex items-center bg-white p-3 rounded-lg shadow-sm border border-secondary-100 hover:shadow-md transition-shadow duration-300"
                         variants={itemVariants}
                         custom={index}
                         whileHover={{ y: -2, transition: { duration: 0.2 } }}
                       >
-                        <div className="mr-2 flex-shrink-0">{getKeyPointIcon(index)}</div>
-                        <p className="text-sm text-secondary-700">{point}</p>
+                        <div className="mr-3 flex-shrink-0">{getKeyPointIcon(index)}</div>
+                        <p className="text-base text-secondary-700">{point}</p>
                       </motion.div>
                     ))}
                   </div>
@@ -707,32 +708,20 @@ export default function SlideContent({ slide }: SlideContentProps) {
               )}
             </motion.div>
 
-            {/* 右侧：核心目的和图片 */}
+            {/* 右侧：核心目的 */}
             <motion.div className="flex flex-col" variants={itemVariants}>
               {slide.purposes && (
                 <div className="mb-4">
-                  <h3 className="text-lg font-semibold text-primary-700 mb-2">核心目的：</h3>
-                  <ul className="space-y-2">
+                  <h3 className="text-xl font-semibold text-primary-700 mb-4">核心目的：</h3>
+                  <ul className="space-y-4">
                     {slide.purposes.map((purpose, index) => (
                       <motion.li key={index} className="flex items-start" variants={itemVariants} custom={index}>
-                        <div className="mr-2 mt-1 h-3 w-3 rounded-full bg-accent-500 flex-shrink-0"></div>
-                        <p className="text-sm text-secondary-700">{purpose}</p>
+                        <div className="mr-3 mt-1.5 h-4 w-4 rounded-full bg-accent-500 flex-shrink-0"></div>
+                        <p className="text-lg text-secondary-700">{purpose}</p>
                       </motion.li>
                     ))}
                   </ul>
                 </div>
-              )}
-
-              {slide.image && (
-                <motion.div
-                  className="mt-auto flex-shrink-0 flex items-center justify-center"
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.03, transition: { duration: 0.2 } }}
-                >
-                  <div className="relative w-full h-40 overflow-hidden rounded-xl shadow-lg border-2 border-white">
-                    <Image src={slide.image || "/placeholder.svg"} alt="旁站监理示意图" fill className="object-cover" />
-                  </div>
-                </motion.div>
               )}
             </motion.div>
           </div>
@@ -754,24 +743,24 @@ export default function SlideContent({ slide }: SlideContentProps) {
             transition={{ duration: 1, ease: "easeOut", delay: 0.5 }}
           />
           <motion.h2
-            className="mb-4 border-b border-secondary-200 pb-3 text-2xl font-bold text-primary-800 md:text-3xl"
+            className="mb-6 border-b border-secondary-200 pb-3 text-3xl font-bold text-primary-800 md:text-4xl"
             variants={itemVariants}
           >
             {slide.title}
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 flex-1">
             {/* 左侧：AI重要性 */}
             <motion.div className="flex flex-col" variants={itemVariants}>
               {slide.aiImportance && (
                 <>
-                  <h3 className="text-lg font-semibold text-primary-700 mb-2">AI赋能的重要性：</h3>
-                  <p className="text-sm text-secondary-700 mb-3">{slide.aiImportance.intro}</p>
-                  <ul className="space-y-2">
+                  <h3 className="text-xl font-semibold text-primary-700 mb-3">AI赋能的重要性：</h3>
+                  <p className="text-base text-secondary-700 mb-4">{slide.aiImportance.intro}</p>
+                  <ul className="space-y-4">
                     {slide.aiImportance.points.map((point, index) => (
                       <motion.li key={index} className="flex items-start" variants={itemVariants} custom={index}>
-                        <div className="mr-2 mt-1 h-3 w-3 rounded-full bg-accent-500 flex-shrink-0"></div>
-                        <p className="text-sm text-secondary-700">{point}</p>
+                        <div className="mr-3 mt-1.5 h-4 w-4 rounded-full bg-accent-500 flex-shrink-0"></div>
+                        <p className="text-lg text-secondary-700">{point}</p>
                       </motion.li>
                     ))}
                   </ul>
@@ -781,20 +770,20 @@ export default function SlideContent({ slide }: SlideContentProps) {
 
             {/* 右侧：核心功能 */}
             <motion.div className="flex flex-col" variants={itemVariants}>
-              <h3 className="text-lg font-semibold text-primary-700 mb-2">核心功能与优势：</h3>
-              <div className="space-y-3">
+              <h3 className="text-xl font-semibold text-primary-700 mb-3">核心功能与优势：</h3>
+              <div className="space-y-4">
                 {slide.features &&
                   slide.features.map((feature, index) => (
                     <motion.div
                       key={index}
-                      className="flex bg-white p-3 rounded-lg shadow-sm border-l-3 border-accent-500 hover:shadow-md transition-shadow duration-300"
+                      className="flex bg-white p-4 rounded-lg shadow-sm border-l-4 border-accent-500 hover:shadow-md transition-shadow duration-300"
                       variants={itemVariants}
                       whileHover={{ y: -2, transition: { duration: 0.2 } }}
                     >
-                      <div className="mr-3 flex-shrink-0">{getIcon(feature.icon)}</div>
+                      <div className="mr-4 flex-shrink-0">{getIcon(feature.icon)}</div>
                       <div>
-                        <h4 className="text-base font-semibold text-primary-700 mb-1">{feature.title}</h4>
-                        <p className="text-xs text-secondary-600">{feature.description}</p>
+                        <h4 className="text-lg font-semibold text-primary-700 mb-2">{feature.title}</h4>
+                        <p className="text-base text-secondary-600">{feature.description}</p>
                       </div>
                     </motion.div>
                   ))}

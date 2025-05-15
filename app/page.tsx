@@ -35,7 +35,6 @@ export default function PresentationPage() {
         "提升多方协同效率，优化沟通流程",
       ],
       keyPoints: ["关键工序实时监控", "质量安全双重保障", "数据采集与分析", "规范遵循与合规性"],
-      image: "/placeholder.svg?key=du565",
       type: "definition-and-purpose",
     },
     {

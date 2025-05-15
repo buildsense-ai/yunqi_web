@@ -39,17 +39,17 @@ export default function FlowChart({ steps }: FlowChartProps) {
   const getIcon = (iconName: string) => {
     switch (iconName) {
       case "message-square":
-        return <MessageSquare className="h-8 w-8" />
+        return <MessageSquare className="h-6 w-6" />
       case "database":
-        return <Database className="h-8 w-8" />
+        return <Database className="h-6 w-6" />
       case "file-text":
-        return <FileText className="h-8 w-8" />
+        return <FileText className="h-6 w-6" />
       case "brain-circuit":
-        return <BrainCircuit className="h-8 w-8" />
+        return <BrainCircuit className="h-6 w-6" />
       case "check-circle":
-        return <CheckCircle className="h-8 w-8" />
+        return <CheckCircle className="h-6 w-6" />
       default:
-        return <MessageSquare className="h-8 w-8" />
+        return <MessageSquare className="h-6 w-6" />
     }
   }
 
@@ -63,11 +63,11 @@ export default function FlowChart({ steps }: FlowChartProps) {
       <div className="w-full max-w-4xl">
         <div className="relative">
           {steps.map((step, index) => (
-            <motion.div key={step.id} className="flex mb-8 relative" variants={itemVariants}>
+            <motion.div key={step.id} className="flex mb-5 relative" variants={itemVariants}>
               {/* 连接线 */}
               {index < steps.length - 1 && (
                 <motion.div
-                  className="absolute left-8 top-16 h-16 w-0.5 bg-secondary-200"
+                  className="absolute left-7 top-14 h-12 w-0.5 bg-secondary-200"
                   initial={{ scaleY: 0, originY: 0 }}
                   animate={{ scaleY: 1 }}
                   transition={{ duration: 0.5, delay: 0.5 + index * 0.2 }}
@@ -76,15 +76,15 @@ export default function FlowChart({ steps }: FlowChartProps) {
 
               {/* 步骤图标 */}
               <div
-                className={`flex-shrink-0 w-16 h-16 rounded-full ${step.color} flex items-center justify-center text-white shadow-lg`}
+                className={`flex-shrink-0 w-14 h-14 rounded-full ${step.color} flex items-center justify-center text-white shadow-lg`}
               >
                 {getIcon(step.icon)}
               </div>
 
               {/* 步骤内容 */}
-              <div className="ml-6 flex-1">
-                <h3 className="text-xl font-bold text-primary-700 mb-2">{step.title}</h3>
-                <p className="text-secondary-600">{step.description}</p>
+              <div className="ml-4 flex-1">
+                <h3 className="text-lg font-bold text-primary-700 mb-1">{step.title}</h3>
+                <p className="text-sm text-secondary-600">{step.description}</p>
               </div>
             </motion.div>
           ))}
